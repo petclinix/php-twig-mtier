@@ -1,0 +1,55 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}My Pets — PetcliniX{% endblock %}
+
+{% block content %}
+    <h2>My Pets</h2>
+
+    {% if pets is empty %}
+        <p>You haven't added any pets yet.</p>
+    {% else %}
+        <ul>
+            {% for pet in pets %}
+                <li>
+                    {{ pet.name }} — {{ pet.species }}
+                    {%- if pet.breed %} ({{ pet.breed }}){% endif -%}
+                    {%- if pet.birthDate %}, born {{ pet.birthDate|date('Y-m-d') }}{% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <h3>Add a Pet</h3>
+
+    {% if errors is not empty %}
+        <ul>
+            {% for error in errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <form method="post" action="/owner/pets">
+        <label>
+            Name
+            <input type="text" name="name" value="{{ old.name|default('') }}" required>
+        </label>
+
+        <label>
+            Species
+            <input type="text" name="species" value="{{ old.species|default('') }}" required>
+        </label>
+
+        <label>
+            Breed
+            <input type="text" name="breed" value="{{ old.breed|default('') }}">
+        </label>
+
+        <label>
+            Birth date
+            <input type="date" name="birth_date" value="{{ old.birth_date|default('') }}">
+        </label>
+
+        <button type="submit">Add Pet</button>
+    </form>
+{% endblock %}

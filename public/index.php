@@ -5,7 +5,11 @@ declare(strict_types=1);
 use App\Http\Controller\AuthController;
 use App\Http\Controller\DashboardController;
 use App\Http\Controller\HomeController;
+use App\Http\Controller\Owner\AppointmentController;
+use App\Http\Controller\Owner\PetController;
+use App\Http\Controller\Owner\VisitController;
 use App\Http\Middleware\AuthMiddleware;
+use App\Http\Middleware\OwnerMiddleware;
 use App\Http\Router\Router;
 use App\Http\Session;
 use Twig\Environment;
@@ -29,5 +33,12 @@ $router->get('/login', [AuthController::class, 'showLogin']);
 $router->post('/login', [AuthController::class, 'login']);
 $router->post('/logout', [AuthController::class, 'logout']);
 $router->get('/dashboard', [DashboardController::class, 'index'], [AuthMiddleware::class]);
+
+$ownerMiddleware = [AuthMiddleware::class, OwnerMiddleware::class];
+$router->get('/owner/pets', [PetController::class, 'index'], $ownerMiddleware);
+$router->post('/owner/pets', [PetController::class, 'store'], $ownerMiddleware);
+$router->get('/owner/appointments', [AppointmentController::class, 'index'], $ownerMiddleware);
+$router->post('/owner/appointments', [AppointmentController::class, 'store'], $ownerMiddleware);
+$router->get('/owner/visits', [VisitController::class, 'index'], $ownerMiddleware);
 
 $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI'], $twig);

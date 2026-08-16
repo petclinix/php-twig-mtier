@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
+use App\Domain\Owner;
 use App\Infrastructure\Database;
 use PDO;
 
@@ -29,5 +30,31 @@ final class OwnerRepository
             'phone' => $phone,
             'address' => $address,
         ]);
+    }
+
+    public function findByUserId(int $userId): ?Owner
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT id, user_id, first_name, last_name, phone, address FROM owners WHERE user_id = :user_id'
+        );
+        $stmt->execute(['user_id' => $userId]);
+        $row = $stmt->fetch();
+
+        return $row === false ? null : $this->hydrate($row);
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     */
+    private function hydrate(array $row): Owner
+    {
+        return new Owner(
+            (int) $row['id'],
+            (int) $row['user_id'],
+            (string) $row['first_name'],
+            (string) $row['last_name'],
+            (string) $row['phone'],
+            (string) $row['address'],
+        );
     }
 }

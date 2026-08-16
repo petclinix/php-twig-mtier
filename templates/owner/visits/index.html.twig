@@ -1,0 +1,24 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Visit History — PetcliniX{% endblock %}
+
+{% block content %}
+    <h2>Visit History</h2>
+
+    {% if visits is empty %}
+        <p>No recorded visits yet.</p>
+    {% else %}
+        <ul>
+            {% for visit in visits %}
+                {% set appointment = appointmentsById[visit.appointmentId] %}
+                <li>
+                    {{ visit.recordedAt|date('Y-m-d H:i') }} —
+                    {{ petsById[appointment.petId].name }} with
+                    Dr. {{ vetsById[appointment.vetId].lastName }}
+                    {%- if visit.diagnosis %}: {{ visit.diagnosis }}{% endif %}
+                    {%- if visit.notes %} ({{ visit.notes }}){% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
+use App\Domain\Vet;
 use App\Infrastructure\Database;
 use PDO;
 
@@ -28,5 +29,53 @@ final class VetRepository
             'last_name' => $lastName,
             'specialty' => $specialty,
         ]);
+    }
+
+    public function findByUserId(int $userId): ?Vet
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT id, user_id, first_name, last_name, specialty FROM vets WHERE user_id = :user_id'
+        );
+        $stmt->execute(['user_id' => $userId]);
+        $row = $stmt->fetch();
+
+        return $row === false ? null : $this->hydrate($row);
+    }
+
+    public function findById(int $id): ?Vet
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT id, user_id, first_name, last_name, specialty FROM vets WHERE id = :id'
+        );
+        $stmt->execute(['id' => $id]);
+        $row = $stmt->fetch();
+
+        return $row === false ? null : $this->hydrate($row);
+    }
+
+    /**
+     * @return list<Vet>
+     */
+    public function findAll(): array
+    {
+        $stmt = $this->pdo->query(
+            'SELECT id, user_id, first_name, last_name, specialty FROM vets ORDER BY last_name, first_name'
+        );
+
+        return array_map($this->hydrate(...), $stmt->fetchAll());
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     */
+    private function hydrate(array $row): Vet
+    {
+        return new Vet(
+            (int) $row['id'],
+            (int) $row['user_id'],
+            (string) $row['first_name'],
+            (string) $row['last_name'],
+            (string) $row['specialty'],
+        );
     }
 }

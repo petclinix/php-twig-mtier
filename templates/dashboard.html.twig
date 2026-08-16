@@ -8,4 +8,12 @@
     {% else %}
         <p>Session user not found.</p>
     {% endif %}
+
+    {% if current_user_role == 'owner' %}
+        <nav>
+            <a href="/owner/pets">My Pets</a>
+            <a href="/owner/appointments">Appointments</a>
+            <a href="/owner/visits">Visit History</a>
+        </nav>
+    {% endif %}
 {% endblock %}

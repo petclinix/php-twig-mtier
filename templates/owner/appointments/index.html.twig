@@ -1,0 +1,71 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Appointments — PetcliniX{% endblock %}
+
+{% block content %}
+    <h2>My Appointments</h2>
+
+    {% if appointments is empty %}
+        <p>No appointments yet.</p>
+    {% else %}
+        <ul>
+            {% for appointment in appointments %}
+                <li>
+                    {{ appointment.scheduledAt|date('Y-m-d H:i') }} —
+                    {{ petsById[appointment.petId].name }} with
+                    Dr. {{ vetsById[appointment.vetId].lastName }}
+                    ({{ appointment.status.value }})
+                    {%- if appointment.reason %} — {{ appointment.reason }}{% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <h3>Book an Appointment</h3>
+
+    {% if pets is empty %}
+        <p>Add a pet before booking an appointment.</p>
+    {% else %}
+        {% if errors is not empty %}
+            <ul>
+                {% for error in errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <form method="post" action="/owner/appointments">
+            <label>
+                Pet
+                <select name="pet_id" required>
+                    <option value="">Select a pet</option>
+                    {% for pet in pets %}
+                        <option value="{{ pet.id }}" {% if old.pet_id|default('') == pet.id %}selected{% endif %}>{{ pet.name }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+
+            <label>
+                Vet
+                <select name="vet_id" required>
+                    <option value="">Select a vet</option>
+                    {% for vet in vets %}
+                        <option value="{{ vet.id }}" {% if old.vet_id|default('') == vet.id %}selected{% endif %}>Dr. {{ vet.firstName }} {{ vet.lastName }} ({{ vet.specialty }})</option>
+                    {% endfor %}
+                </select>
+            </label>
+
+            <label>
+                Date and time
+                <input type="datetime-local" name="scheduled_at" value="{{ old.scheduled_at|default('') }}" required>
+            </label>
+
+            <label>
+                Reason
+                <input type="text" name="reason" value="{{ old.reason|default('') }}">
+            </label>
+
+            <button type="submit">Book Appointment</button>
+        </form>
+    {% endif %}
+{% endblock %}
