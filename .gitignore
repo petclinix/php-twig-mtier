@@ -1,0 +1,9 @@
+
+## Composer
+/vendor/
+.env
+.phpunit.result.cache
+
+## Intellij Idea
+/.idea/
+

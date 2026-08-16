@@ -1,0 +1,2 @@
+-- Seed data for local development.
+-- Populated starting with Phase 2 (auth) once password hashing is wired up.
