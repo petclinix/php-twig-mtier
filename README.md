@@ -19,3 +19,13 @@ Owners and vets self-register at `/register`. The admin account is seeded (admin
 ```
 docker compose exec php vendor/bin/phpunit
 ```
+
+## Building the production image
+
+`docker/php/Dockerfile` is a multi-stage build. `docker-compose.yml` targets the `testing`
+stage (PHPUnit + `tests/`, for local dev). `prod` is the last stage — the default target —
+and installs with `--no-dev`, ships no test sources, and has no PHPUnit binary:
+
+```
+docker build --target prod -f docker/php/Dockerfile -t php-twig-mtier:prod .
+```

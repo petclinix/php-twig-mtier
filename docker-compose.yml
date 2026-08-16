@@ -3,6 +3,9 @@ services:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
+      # Local dev/test needs PHPUnit + tests/ — the prod stage (the Dockerfile's
+      # default target) deliberately excludes both. See docker/php/Dockerfile.
+      target: testing
     volumes:
       - .:/var/www
       - vendor:/var/www/vendor

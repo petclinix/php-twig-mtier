@@ -1,4 +1,4 @@
-FROM php:8.3-fpm
+FROM php:8.3-fpm AS base
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         unzip \
@@ -11,8 +11,32 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www
 
 COPY composer.json ./
+
+# ---------------------------------------------------------------------------
+# testing: full dependency tree (incl. require-dev / PHPUnit) plus test
+# sources. This is what docker-compose builds for local dev — it's also the
+# container `vendor/bin/phpunit` runs in.
+# ---------------------------------------------------------------------------
+FROM base AS testing
+
 RUN composer install --no-interaction --no-progress
 
 COPY . .
+
+CMD ["php-fpm"]
+
+# ---------------------------------------------------------------------------
+# prod: --no-dev only, and only the runtime source directories — no tests/,
+# no phpunit.xml, no dev tooling. Last stage, so it's the default `docker
+# build` target: forgetting --target never silently produces the bloated
+# image again.
+# ---------------------------------------------------------------------------
+FROM base AS prod
+
+RUN composer install --no-interaction --no-progress --no-dev --optimize-autoloader
+
+COPY public ./public
+COPY src ./src
+COPY templates ./templates
 
 CMD ["php-fpm"]
