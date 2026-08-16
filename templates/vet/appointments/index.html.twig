@@ -1,0 +1,38 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Appointments — PetcliniX{% endblock %}
+
+{% block content %}
+    <h2>My Appointments</h2>
+
+    {% if appointments is empty %}
+        <p>No appointments assigned yet.</p>
+    {% else %}
+        <ul>
+            {% for appointment in appointments %}
+                {% set pet = petsById[appointment.petId] is defined ? petsById[appointment.petId] : null %}
+                {% set owner = pet and ownersById[pet.ownerId] is defined ? ownersById[pet.ownerId] : null %}
+                <li>
+                    {{ appointment.scheduledAt|date('Y-m-d H:i') }} —
+                    {% if pet %}{{ pet.name }} ({{ owner ? owner.firstName ~ ' ' ~ owner.lastName : 'unknown owner' }}){% else %}unknown pet{% endif %}
+                    ({{ appointment.status.value }})
+                    {%- if appointment.reason %} — {{ appointment.reason }}{% endif %}
+
+                    {% if appointment.status.value == 'requested' %}
+                        <form method="post" action="/vet/appointments/{{ appointment.id }}/confirm" style="display:inline">
+                            <button type="submit">Confirm</button>
+                        </form>
+                        <form method="post" action="/vet/appointments/{{ appointment.id }}/cancel" style="display:inline">
+                            <button type="submit">Cancel</button>
+                        </form>
+                    {% elseif appointment.status.value == 'confirmed' %}
+                        <a href="/vet/appointments/{{ appointment.id }}/visit">Record Visit</a>
+                        <form method="post" action="/vet/appointments/{{ appointment.id }}/cancel" style="display:inline">
+                            <button type="submit">Cancel</button>
+                        </form>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}

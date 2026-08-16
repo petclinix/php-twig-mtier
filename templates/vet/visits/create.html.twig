@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Record Visit — PetcliniX{% endblock %}
+
+{% block content %}
+    <h2>Record Visit</h2>
+
+    <p>
+        {{ appointment.scheduledAt|date('Y-m-d H:i') }}
+        {% if pet %} — {{ pet.name }}{% endif %}
+        {%- if appointment.reason %} — {{ appointment.reason }}{% endif %}
+    </p>
+
+    <form method="post" action="/vet/appointments/{{ appointment.id }}/visit">
+        <label>
+            Diagnosis
+            <input type="text" name="diagnosis" value="{{ old.diagnosis|default('') }}">
+        </label>
+
+        <label>
+            Notes
+            <textarea name="notes">{{ old.notes|default('') }}</textarea>
+        </label>
+
+        <button type="submit">Save Visit</button>
+    </form>
+{% endblock %}

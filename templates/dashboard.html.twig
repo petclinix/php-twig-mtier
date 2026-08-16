@@ -15,5 +15,10 @@
             <a href="/owner/appointments">Appointments</a>
             <a href="/owner/visits">Visit History</a>
         </nav>
+    {% elseif current_user_role == 'vet' %}
+        <nav>
+            <a href="/vet/availability">Availability</a>
+            <a href="/vet/appointments">Appointments</a>
+        </nav>
     {% endif %}
 {% endblock %}

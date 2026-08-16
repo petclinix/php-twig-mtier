@@ -70,6 +70,26 @@ final class AppointmentRepository
     }
 
     /**
+     * @return list<Appointment>
+     */
+    public function findAllByVetId(int $vetId): array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT id, pet_id, vet_id, scheduled_at, status, reason, created_at
+             FROM appointments WHERE vet_id = :vet_id ORDER BY scheduled_at'
+        );
+        $stmt->execute(['vet_id' => $vetId]);
+
+        return array_map($this->hydrate(...), $stmt->fetchAll());
+    }
+
+    public function updateStatus(int $id, AppointmentStatus $status): void
+    {
+        $stmt = $this->pdo->prepare('UPDATE appointments SET status = :status WHERE id = :id');
+        $stmt->execute(['status' => $status->value, 'id' => $id]);
+    }
+
+    /**
      * @param array<string, mixed> $row
      */
     private function hydrate(array $row): Appointment

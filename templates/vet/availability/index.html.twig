@@ -1,0 +1,46 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Availability — PetcliniX{% endblock %}
+
+{% block content %}
+    <h2>My Availability</h2>
+
+    {% if slots is empty %}
+        <p>No availability slots yet.</p>
+    {% else %}
+        <ul>
+            {% for slot in slots %}
+                <li>
+                    {{ slot.startsAt|date('Y-m-d H:i') }} – {{ slot.endsAt|date('H:i') }}
+                    <form method="post" action="/vet/availability/{{ slot.id }}/delete" style="display:inline">
+                        <button type="submit">Remove</button>
+                    </form>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <h3>Add Availability</h3>
+
+    {% if errors is not empty %}
+        <ul>
+            {% for error in errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <form method="post" action="/vet/availability">
+        <label>
+            Starts at
+            <input type="datetime-local" name="starts_at" value="{{ old.starts_at|default('') }}" required>
+        </label>
+
+        <label>
+            Ends at
+            <input type="datetime-local" name="ends_at" value="{{ old.ends_at|default('') }}" required>
+        </label>
+
+        <button type="submit">Add</button>
+    </form>
+{% endblock %}

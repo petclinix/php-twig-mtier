@@ -43,6 +43,17 @@ final class OwnerRepository
         return $row === false ? null : $this->hydrate($row);
     }
 
+    public function findById(int $id): ?Owner
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT id, user_id, first_name, last_name, phone, address FROM owners WHERE id = :id'
+        );
+        $stmt->execute(['id' => $id]);
+        $row = $stmt->fetch();
+
+        return $row === false ? null : $this->hydrate($row);
+    }
+
     /**
      * @param array<string, mixed> $row
      */

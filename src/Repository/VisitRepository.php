@@ -8,6 +8,7 @@ use App\Domain\Visit;
 use App\Infrastructure\Database;
 use DateTimeImmutable;
 use PDO;
+use RuntimeException;
 
 final class VisitRepository
 {
@@ -16,6 +17,31 @@ final class VisitRepository
     public function __construct()
     {
         $this->pdo = Database::connection();
+    }
+
+    public function create(int $appointmentId, ?string $diagnosis, ?string $notes): Visit
+    {
+        $stmt = $this->pdo->prepare(
+            'INSERT INTO visits (appointment_id, diagnosis, notes) VALUES (:appointment_id, :diagnosis, :notes)'
+        );
+        $stmt->execute([
+            'appointment_id' => $appointmentId,
+            'diagnosis' => $diagnosis,
+            'notes' => $notes,
+        ]);
+
+        $id = (int) $this->pdo->lastInsertId();
+
+        return $this->findById($id) ?? throw new RuntimeException('Failed to load visit after insert.');
+    }
+
+    public function findById(int $id): ?Visit
+    {
+        $stmt = $this->pdo->prepare('SELECT id, appointment_id, diagnosis, notes, recorded_at FROM visits WHERE id = :id');
+        $stmt->execute(['id' => $id]);
+        $row = $stmt->fetch();
+
+        return $row === false ? null : $this->hydrate($row);
     }
 
     /**
