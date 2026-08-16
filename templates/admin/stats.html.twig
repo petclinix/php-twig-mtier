@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin Dashboard — PetcliniX{% endblock %}
+
+{% block content %}
+    <h2>Stats</h2>
+
+    <ul>
+        <li>Owners: {{ stats.ownerCount }}</li>
+        <li>Vets: {{ stats.vetCount }}</li>
+        <li>Pets: {{ stats.petCount }}</li>
+        <li>Appointments: {{ stats.appointmentCount }}</li>
+        <li>Visits: {{ stats.visitCount }}</li>
+    </ul>
+
+    <h3>Appointments by Status</h3>
+    <ul>
+        {% for status, count in stats.appointmentsByStatus %}
+            <li>{{ status }}: {{ count }}</li>
+        {% endfor %}
+    </ul>
+
+    <nav>
+        <a href="/admin/users">Manage Users</a>
+        <a href="/admin/activity">Activity Log</a>
+    </nav>
+{% endblock %}

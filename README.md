@@ -11,6 +11,9 @@ docker compose up --build
 
 Then visit http://localhost:8080.
 
+Owners and vets self-register at `/register`. The admin account is seeded (admins aren't self-registered):
+`admin@petclinix.local` / `admin12345`.
+
 ## Running tests
 
 ```

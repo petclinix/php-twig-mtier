@@ -1,0 +1,40 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Users — PetcliniX{% endblock %}
+
+{% block content %}
+    <h2>Users</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Registered</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+                <tr>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.role.value }}</td>
+                    <td>{{ user.isActive ? 'active' : 'deactivated' }}</td>
+                    <td>{{ user.createdAt|date('Y-m-d') }}</td>
+                    <td>
+                        {% if user.isActive %}
+                            <form method="post" action="/admin/users/{{ user.id }}/deactivate" style="display:inline">
+                                <button type="submit">Deactivate</button>
+                            </form>
+                        {% else %}
+                            <form method="post" action="/admin/users/{{ user.id }}/activate" style="display:inline">
+                                <button type="submit">Activate</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

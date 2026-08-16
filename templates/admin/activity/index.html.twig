@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Activity Log — PetcliniX{% endblock %}
+
+{% block content %}
+    <h2>Activity Log</h2>
+
+    {% if entries is empty %}
+        <p>No activity recorded yet.</p>
+    {% else %}
+        <ul>
+            {% for entry in entries %}
+                {% set user = entry.userId is not null and usersById[entry.userId] is defined ? usersById[entry.userId] : null %}
+                <li>
+                    {{ entry.createdAt|date('Y-m-d H:i:s') }} —
+                    {{ user ? user.email : 'system' }} —
+                    {{ entry.action }}
+                    {%- if entry.context %} ({{ entry.context|json_encode }}){% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}

@@ -7,6 +7,7 @@ namespace App\Service;
 use App\Domain\Role;
 use App\Domain\User;
 use App\Infrastructure\Database;
+use App\Repository\ActivityLogRepository;
 use App\Repository\OwnerRepository;
 use App\Repository\UserRepository;
 use App\Repository\VetRepository;
@@ -18,6 +19,7 @@ final class AuthService
         private readonly UserRepository $users,
         private readonly OwnerRepository $owners,
         private readonly VetRepository $vets,
+        private readonly ActivityLogRepository $activityLog,
     ) {
     }
 
@@ -53,6 +55,8 @@ final class AuthService
                 );
             }
 
+            $this->activityLog->record($user->id, 'user_registered', ['role' => $role->value]);
+
             $pdo->commit();
         } catch (Throwable $e) {
             $pdo->rollBack();
@@ -71,5 +75,10 @@ final class AuthService
         }
 
         return $user;
+    }
+
+    public function recordLogin(int $userId): void
+    {
+        $this->activityLog->record($userId, 'user_login');
     }
 }

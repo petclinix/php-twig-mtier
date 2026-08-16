@@ -6,6 +6,7 @@ namespace App\Tests\Service;
 
 use App\Domain\Role;
 use App\Infrastructure\Database;
+use App\Repository\ActivityLogRepository;
 use App\Repository\OwnerRepository;
 use App\Repository\UserRepository;
 use App\Repository\VetRepository;
@@ -20,7 +21,12 @@ final class AuthServiceTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->auth = new AuthService(new UserRepository(), new OwnerRepository(), new VetRepository());
+        $this->auth = new AuthService(
+            new UserRepository(),
+            new OwnerRepository(),
+            new VetRepository(),
+            new ActivityLogRepository(),
+        );
         $this->email = sprintf('test-%s@example.test', bin2hex(random_bytes(6)));
     }
 

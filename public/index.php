@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Http\Controller\Admin\ActivityController as AdminActivityController;
+use App\Http\Controller\Admin\StatsController as AdminStatsController;
+use App\Http\Controller\Admin\UserController as AdminUserController;
 use App\Http\Controller\AuthController;
 use App\Http\Controller\DashboardController;
 use App\Http\Controller\HomeController;
@@ -11,6 +14,7 @@ use App\Http\Controller\Owner\VisitController;
 use App\Http\Controller\Vet\AppointmentController as VetAppointmentController;
 use App\Http\Controller\Vet\AvailabilityController as VetAvailabilityController;
 use App\Http\Controller\Vet\VisitController as VetVisitController;
+use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\AuthMiddleware;
 use App\Http\Middleware\OwnerMiddleware;
 use App\Http\Middleware\VetMiddleware;
@@ -54,5 +58,12 @@ $router->post('/vet/appointments/{id:\d+}/confirm', [VetAppointmentController::c
 $router->post('/vet/appointments/{id:\d+}/cancel', [VetAppointmentController::class, 'cancel'], $vetMiddleware);
 $router->get('/vet/appointments/{id:\d+}/visit', [VetVisitController::class, 'create'], $vetMiddleware);
 $router->post('/vet/appointments/{id:\d+}/visit', [VetVisitController::class, 'store'], $vetMiddleware);
+
+$adminMiddleware = [AuthMiddleware::class, AdminMiddleware::class];
+$router->get('/admin', [AdminStatsController::class, 'index'], $adminMiddleware);
+$router->get('/admin/users', [AdminUserController::class, 'index'], $adminMiddleware);
+$router->post('/admin/users/{id:\d+}/activate', [AdminUserController::class, 'activate'], $adminMiddleware);
+$router->post('/admin/users/{id:\d+}/deactivate', [AdminUserController::class, 'deactivate'], $adminMiddleware);
+$router->get('/admin/activity', [AdminActivityController::class, 'index'], $adminMiddleware);
 
 $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI'], $twig);

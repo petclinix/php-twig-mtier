@@ -6,14 +6,16 @@ namespace App\Domain;
 
 use DateTimeImmutable;
 
-final readonly class User
+final readonly class ActivityLogEntry
 {
+    /**
+     * @param array<string, mixed>|null $context
+     */
     public function __construct(
         public int $id,
-        public string $email,
-        public string $passwordHash,
-        public Role $role,
-        public bool $isActive,
+        public ?int $userId,
+        public string $action,
+        public ?array $context,
         public DateTimeImmutable $createdAt,
     ) {
     }

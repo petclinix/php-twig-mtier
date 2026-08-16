@@ -7,6 +7,7 @@ namespace App\Tests\Owner;
 use App\Domain\AppointmentStatus;
 use App\Domain\Role;
 use App\Infrastructure\Database;
+use App\Repository\ActivityLogRepository;
 use App\Repository\AppointmentRepository;
 use App\Repository\OwnerRepository;
 use App\Repository\PetRepository;
@@ -38,7 +39,7 @@ final class OwnerPortalTest extends TestCase
 
     public function testOwnerCanRegisterPetBookAppointmentAndSeeVisitHistory(): void
     {
-        $auth = new AuthService(new UserRepository(), new OwnerRepository(), new VetRepository());
+        $auth = new AuthService(new UserRepository(), new OwnerRepository(), new VetRepository(), new ActivityLogRepository());
 
         $ownerUser = $auth->register($this->ownerEmail, 'correct-horse', Role::Owner, [
             'first_name' => 'Jane',

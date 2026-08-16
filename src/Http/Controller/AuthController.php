@@ -6,6 +6,7 @@ namespace App\Http\Controller;
 
 use App\Domain\Role;
 use App\Http\Session;
+use App\Repository\ActivityLogRepository;
 use App\Repository\OwnerRepository;
 use App\Repository\UserRepository;
 use App\Repository\VetRepository;
@@ -19,7 +20,12 @@ final class AuthController
 
     public function __construct(private readonly Environment $twig)
     {
-        $this->auth = new AuthService(new UserRepository(), new OwnerRepository(), new VetRepository());
+        $this->auth = new AuthService(
+            new UserRepository(),
+            new OwnerRepository(),
+            new VetRepository(),
+            new ActivityLogRepository(),
+        );
     }
 
     /**
@@ -115,7 +121,15 @@ final class AuthController
             ]);
         }
 
+        if (!$user->isActive) {
+            return $this->twig->render('auth/login.html.twig', [
+                'error' => 'This account has been deactivated.',
+                'old' => ['email' => $email],
+            ]);
+        }
+
         Session::login($user->id, $user->role->value);
+        $this->auth->recordLogin($user->id);
 
         header('Location: /dashboard');
 
