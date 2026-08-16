@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Router;
 
+use App\Http\Middleware\Middleware;
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
 use Twig\Environment;
@@ -12,22 +13,32 @@ use function FastRoute\simpleDispatcher;
 
 final class Router
 {
-    /** @var list<array{0: string, 1: string, 2: array{0: class-string, 1: string}}> */
+    /** @var list<array{0: string, 1: string, 2: array{0: class-string, 1: string}, 3: list<class-string<Middleware>>}> */
     private array $routes = [];
 
     /**
      * @param array{0: class-string, 1: string} $handler
+     * @param list<class-string<Middleware>> $middleware
      */
-    public function get(string $pattern, array $handler): void
+    public function get(string $pattern, array $handler, array $middleware = []): void
     {
-        $this->routes[] = ['GET', $pattern, $handler];
+        $this->routes[] = ['GET', $pattern, $handler, $middleware];
+    }
+
+    /**
+     * @param array{0: class-string, 1: string} $handler
+     * @param list<class-string<Middleware>> $middleware
+     */
+    public function post(string $pattern, array $handler, array $middleware = []): void
+    {
+        $this->routes[] = ['POST', $pattern, $handler, $middleware];
     }
 
     public function dispatch(string $method, string $uri, Environment $twig): void
     {
         $dispatcher = simpleDispatcher(function (RouteCollector $r): void {
-            foreach ($this->routes as [$httpMethod, $pattern, $handler]) {
-                $r->addRoute($httpMethod, $pattern, $handler);
+            foreach ($this->routes as [$httpMethod, $pattern, $handler, $middleware]) {
+                $r->addRoute($httpMethod, $pattern, [$handler, $middleware]);
             }
         });
 
@@ -46,8 +57,15 @@ final class Router
                 break;
 
             case Dispatcher::FOUND:
-                [, $handler, $vars] = $routeInfo;
-                [$class, $action] = $handler;
+                [$routeData, $vars] = [$routeInfo[1], $routeInfo[2]];
+                [[$class, $action], $middleware] = $routeData;
+
+                foreach ($middleware as $middlewareClass) {
+                    if (!(new $middlewareClass())->handle()) {
+                        return;
+                    }
+                }
+
                 $controller = new $class($twig);
                 echo $controller->$action($vars);
                 break;

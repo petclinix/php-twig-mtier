@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Dashboard — PetcliniX{% endblock %}
+
+{% block content %}
+    {% if user %}
+        <p>Logged in as {{ user.email }} ({{ user.role.value }}).</p>
+    {% else %}
+        <p>Session user not found.</p>
+    {% endif %}
+{% endblock %}

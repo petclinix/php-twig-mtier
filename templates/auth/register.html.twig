@@ -1,0 +1,71 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Register — PetcliniX{% endblock %}
+
+{% block content %}
+    <h2>Register</h2>
+
+    {% if errors is not empty %}
+        <ul>
+            {% for error in errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <form method="post" action="/register">
+        <label>
+            Email
+            <input type="email" name="email" value="{{ old.email|default('') }}" required>
+        </label>
+
+        <label>
+            Password
+            <input type="password" name="password" required>
+        </label>
+
+        <label>
+            Confirm password
+            <input type="password" name="password_confirmation" required>
+        </label>
+
+        <fieldset>
+            <legend>Role</legend>
+            <label>
+                <input type="radio" name="role" value="owner" {% if old.role|default('') == 'owner' %}checked{% endif %}>
+                Owner
+            </label>
+            <label>
+                <input type="radio" name="role" value="vet" {% if old.role|default('') == 'vet' %}checked{% endif %}>
+                Vet
+            </label>
+        </fieldset>
+
+        <label>
+            First name
+            <input type="text" name="first_name" value="{{ old.first_name|default('') }}" required>
+        </label>
+
+        <label>
+            Last name
+            <input type="text" name="last_name" value="{{ old.last_name|default('') }}" required>
+        </label>
+
+        <label>
+            Phone <small>(owners)</small>
+            <input type="text" name="phone" value="{{ old.phone|default('') }}">
+        </label>
+
+        <label>
+            Address <small>(owners)</small>
+            <input type="text" name="address" value="{{ old.address|default('') }}">
+        </label>
+
+        <label>
+            Specialty <small>(vets)</small>
+            <input type="text" name="specialty" value="{{ old.specialty|default('') }}">
+        </label>
+
+        <button type="submit">Register</button>
+    </form>
+{% endblock %}
