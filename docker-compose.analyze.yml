@@ -1,0 +1,36 @@
+services:
+  sonarqube:
+    image: docker.io/library/sonarqube:community
+    ports:
+      - "9000:9000"
+    environment:
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_logs:/opt/sonarqube/logs
+      - sonarqube_extensions:/opt/sonarqube/extensions
+    networks:
+      - analyze
+
+  sonar-scanner:
+    image: docker.io/sonarsource/sonar-scanner-cli:latest
+    depends_on:
+      - sonarqube
+    environment:
+      SONAR_HOST_URL: http://sonarqube:9000
+      SONAR_TOKEN: ${SONAR_TOKEN}
+    volumes:
+      - .:/usr/src
+    networks:
+      - analyze
+    profiles:
+      - scan   # never started by a bare `up`; only via `run` in sonar-analyze.sh
+
+networks:
+  analyze:
+    name: petclinix-php-twig-mtier-analyze
+
+volumes:
+  sonarqube_data:
+  sonarqube_logs:
+  sonarqube_extensions:

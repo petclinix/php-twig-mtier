@@ -4,6 +4,10 @@
 .env
 .phpunit.result.cache
 
+## Coverage
+/coverage/
+.phpunit.cache/
+
 ## Intellij Idea
 /.idea/
 
