@@ -46,22 +46,27 @@ final class VisitControllerTest extends TestCase
 
     public function testIndexShowsEmptyStateWithNoVisits(): void
     {
+        //act
         $output = $this->controller->index([]);
 
+        //assert
         self::assertStringContainsString('Visit History', $output);
         self::assertStringContainsString('No recorded visits yet.', $output);
     }
 
     public function testIndexListsRecordedVisits(): void
     {
+        //arrange
         $pet = (new PetRepository())->create($this->owner->id, 'Rex', 'Dog', null, null);
         $appointment = (new AppointmentRepository())->create($pet->id, $this->vet->id, new DateTimeImmutable('-1 week'), 'Checkup');
         Database::connection()
             ->prepare('INSERT INTO visits (appointment_id, diagnosis, notes) VALUES (:appointment_id, :diagnosis, :notes)')
             ->execute(['appointment_id' => $appointment->id, 'diagnosis' => 'Healthy', 'notes' => 'No concerns.']);
 
+        //act
         $output = $this->controller->index([]);
 
+        //assert
         self::assertStringContainsString('Visit History', $output);
         self::assertStringContainsString('Healthy', $output);
     }

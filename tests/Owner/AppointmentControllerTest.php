@@ -52,16 +52,20 @@ final class AppointmentControllerTest extends TestCase
 
     public function testIndexListsOwnersAppointments(): void
     {
+        //arrange
         (new AppointmentRepository())->create($this->petId, $this->vet->id, new DateTimeImmutable('+1 week'), 'Checkup');
 
+        //act
         $output = $this->controller->index([]);
 
+        //assert
         self::assertStringContainsString('My Appointments', $output);
         self::assertStringContainsString('Rex', $output);
     }
 
     public function testStoreWithValidDataCreatesAppointmentAndRedirects(): void
     {
+        //arrange
         $_POST = [
             'pet_id' => (string) $this->petId,
             'vet_id' => (string) $this->vet->id,
@@ -69,8 +73,10 @@ final class AppointmentControllerTest extends TestCase
             'reason' => 'Checkup',
         ];
 
+        //act
         $output = $this->controller->store([]);
 
+        //assert
         self::assertSame('', $output);
         self::assertSame('/owner/appointments', HeaderSpy::location());
         $appointments = (new AppointmentRepository())->findAllByPetIds([$this->petId]);
@@ -79,6 +85,7 @@ final class AppointmentControllerTest extends TestCase
 
     public function testStoreWithPetNotOwnedShowsValidationError(): void
     {
+        //arrange
         $_POST = [
             'pet_id' => '999999999',
             'vet_id' => (string) $this->vet->id,
@@ -86,14 +93,17 @@ final class AppointmentControllerTest extends TestCase
             'reason' => '',
         ];
 
+        //act
         $output = $this->controller->store([]);
 
+        //assert
         self::assertStringContainsString('Choose one of your pets.', $output);
         self::assertSame([], HeaderSpy::$headers);
     }
 
     public function testStoreWithInvalidVetShowsValidationError(): void
     {
+        //arrange
         $_POST = [
             'pet_id' => (string) $this->petId,
             'vet_id' => '999999999',
@@ -101,14 +111,17 @@ final class AppointmentControllerTest extends TestCase
             'reason' => '',
         ];
 
+        //act
         $output = $this->controller->store([]);
 
+        //assert
         self::assertStringContainsString('Choose a vet.', $output);
         self::assertSame([], HeaderSpy::$headers);
     }
 
     public function testStoreWithEmptyDateTimeShowsValidationError(): void
     {
+        //arrange
         $_POST = [
             'pet_id' => (string) $this->petId,
             'vet_id' => (string) $this->vet->id,
@@ -116,14 +129,17 @@ final class AppointmentControllerTest extends TestCase
             'reason' => '',
         ];
 
+        //act
         $output = $this->controller->store([]);
 
+        //assert
         self::assertStringContainsString('Choose a date and time.', $output);
         self::assertSame([], HeaderSpy::$headers);
     }
 
     public function testStoreWithPastDateTimeShowsValidationError(): void
     {
+        //arrange
         $_POST = [
             'pet_id' => (string) $this->petId,
             'vet_id' => (string) $this->vet->id,
@@ -131,8 +147,10 @@ final class AppointmentControllerTest extends TestCase
             'reason' => '',
         ];
 
+        //act
         $output = $this->controller->store([]);
 
+        //assert
         self::assertStringContainsString('Choose a time in the future.', $output);
         self::assertSame([], HeaderSpy::$headers);
     }

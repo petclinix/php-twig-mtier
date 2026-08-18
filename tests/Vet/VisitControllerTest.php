@@ -66,49 +66,63 @@ final class VisitControllerTest extends TestCase
 
     public function testCreateRendersFormForOwnConfirmedAppointment(): void
     {
+        //arrange
         $appointmentId = $this->createAppointment(AppointmentStatus::Confirmed);
 
+        //act
         $output = $this->controller->create(['id' => (string) $appointmentId]);
 
+        //assert
         self::assertStringContainsString('Record Visit', $output);
         self::assertStringContainsString('Rex', $output);
     }
 
     public function testCreateRedirectsWhenAppointmentNotFound(): void
     {
+        //act
         $output = $this->controller->create(['id' => '999999999']);
 
+        //assert
         self::assertSame('', $output);
         self::assertSame('/vet/appointments', HeaderSpy::location());
     }
 
     public function testCreateRedirectsWhenAppointmentBelongsToAnotherVet(): void
     {
+        //arrange
         $appointmentId = $this->createAppointment(AppointmentStatus::Confirmed, $this->otherVet);
 
+        //act
         $output = $this->controller->create(['id' => (string) $appointmentId]);
 
+        //assert
         self::assertSame('', $output);
         self::assertSame('/vet/appointments', HeaderSpy::location());
     }
 
     public function testCreateRedirectsWhenAppointmentNotConfirmed(): void
     {
+        //arrange
         $appointmentId = $this->createAppointment(AppointmentStatus::Requested);
 
+        //act
         $output = $this->controller->create(['id' => (string) $appointmentId]);
 
+        //assert
         self::assertSame('', $output);
         self::assertSame('/vet/appointments', HeaderSpy::location());
     }
 
     public function testStoreWithValidDataRecordsVisitAndCompletesAppointment(): void
     {
+        //arrange
         $appointmentId = $this->createAppointment(AppointmentStatus::Confirmed);
         $_POST = ['diagnosis' => 'Healthy', 'notes' => 'No concerns.'];
 
+        //act
         $output = $this->controller->store(['id' => (string) $appointmentId]);
 
+        //assert
         self::assertSame('', $output);
         self::assertSame('/vet/appointments', HeaderSpy::location());
         $updated = (new AppointmentRepository())->findById($appointmentId);
@@ -120,11 +134,14 @@ final class VisitControllerTest extends TestCase
 
     public function testStoreRedirectsWithoutRecordingVisitWhenAppointmentNotConfirmed(): void
     {
+        //arrange
         $appointmentId = $this->createAppointment(AppointmentStatus::Requested);
         $_POST = ['diagnosis' => 'Healthy', 'notes' => ''];
 
+        //act
         $output = $this->controller->store(['id' => (string) $appointmentId]);
 
+        //assert
         self::assertSame('', $output);
         self::assertSame('/vet/appointments', HeaderSpy::location());
         self::assertCount(0, (new VisitRepository())->findAllByPetIds([$this->petId]));

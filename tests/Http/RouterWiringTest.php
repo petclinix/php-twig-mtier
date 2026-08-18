@@ -23,24 +23,30 @@ final class RouterWiringTest extends TestCase
 
     public function testHomeRouteRunsHomeControllerThroughTwig(): void
     {
+        //act
         $response = self::$server->request('GET', '/');
 
+        //assert
         self::assertSame(200, $response->statusCode);
         self::assertStringContainsString('Skeleton is running.', $response->body);
     }
 
     public function testUnknownRouteReturns404FromRouterNotFoundBranch(): void
     {
+        //act
         $response = self::$server->request('GET', '/this-route-does-not-exist');
 
+        //assert
         self::assertSame(404, $response->statusCode);
         self::assertStringContainsString('Page not found.', $response->body);
     }
 
     public function testProtectedRouteWithoutSessionRedirectsToLoginBeforeControllerRuns(): void
     {
+        //act
         $response = self::$server->request('GET', '/dashboard');
 
+        //assert
         self::assertSame(302, $response->statusCode);
         self::assertSame('/login', $response->headers['location'] ?? null);
         self::assertSame('', $response->body); // AuthMiddleware short-circuits; DashboardController never runs.

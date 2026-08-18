@@ -78,40 +78,51 @@ final class AuthenticatedRoutingTest extends TestCase
 
     public function testLoginThenDashboardRunsFullRouterMiddlewareControllerChain(): void
     {
+        //act
         $loginResponse = self::$server->request(
             'POST',
             '/login',
             [],
             http_build_query(['email' => $this->ownerEmail, 'password' => self::PASSWORD]),
         );
+
+        //assert
         self::assertSame(302, $loginResponse->statusCode);
         self::assertSame('/dashboard', $loginResponse->headers['location'] ?? null);
 
         $cookie = $loginResponse->sessionCookie();
         self::assertNotNull($cookie);
 
+        //act
         $dashboard = self::$server->request('GET', '/dashboard', ['Cookie' => $cookie]);
 
+        //assert
         self::assertSame(200, $dashboard->statusCode);
         self::assertStringContainsString("Logged in as {$this->ownerEmail}", $dashboard->body);
     }
 
     public function testOwnerCanReachOwnerPetsRoute(): void
     {
+        //arrange
         $cookie = $this->loginAs($this->ownerEmail);
 
+        //act
         $response = self::$server->request('GET', '/owner/pets', ['Cookie' => $cookie]);
 
+        //assert
         self::assertSame(200, $response->statusCode);
         self::assertStringContainsString('My Pets', $response->body);
     }
 
     public function testNonOwnerIsRedirectedAwayFromOwnerRoute(): void
     {
+        //arrange
         $cookie = $this->loginAs($this->vetEmail);
 
+        //act
         $response = self::$server->request('GET', '/owner/pets', ['Cookie' => $cookie]);
 
+        //assert
         self::assertSame(302, $response->statusCode);
         self::assertSame('/dashboard', $response->headers['location'] ?? null);
         self::assertSame('', $response->body); // OwnerMiddleware short-circuits; PetController never runs.
@@ -119,20 +130,26 @@ final class AuthenticatedRoutingTest extends TestCase
 
     public function testAdminCanReachAdminStatsRoute(): void
     {
+        //arrange
         $cookie = $this->loginAs($this->adminEmail);
 
+        //act
         $response = self::$server->request('GET', '/admin', ['Cookie' => $cookie]);
 
+        //assert
         self::assertSame(200, $response->statusCode);
         self::assertStringContainsString('Stats', $response->body);
     }
 
     public function testNonAdminIsRedirectedAwayFromAdminRoute(): void
     {
+        //arrange
         $cookie = $this->loginAs($this->ownerEmail);
 
+        //act
         $response = self::$server->request('GET', '/admin', ['Cookie' => $cookie]);
 
+        //assert
         self::assertSame(302, $response->statusCode);
         self::assertSame('/dashboard', $response->headers['location'] ?? null);
         self::assertSame('', $response->body); // AdminMiddleware short-circuits; StatsController never runs.

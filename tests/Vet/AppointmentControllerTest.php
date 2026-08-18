@@ -55,27 +55,35 @@ final class AppointmentControllerTest extends TestCase
 
     public function testIndexShowsEmptyStateWithNoAppointments(): void
     {
+        //act
         $output = $this->controller->index([]);
 
+        //assert
         self::assertStringContainsString('My Appointments', $output);
         self::assertStringContainsString('No appointments assigned yet.', $output);
     }
 
     public function testIndexListsVetsAppointments(): void
     {
+        //arrange
         (new AppointmentRepository())->create($this->petId, $this->vet->id, new DateTimeImmutable('+1 week'), 'Checkup');
 
+        //act
         $output = $this->controller->index([]);
 
+        //assert
         self::assertStringContainsString('Rex', $output);
     }
 
     public function testConfirmTransitionsRequestedToConfirmed(): void
     {
+        //arrange
         $appointment = (new AppointmentRepository())->create($this->petId, $this->vet->id, new DateTimeImmutable('+1 week'), null);
 
+        //act
         $output = $this->controller->confirm(['id' => (string) $appointment->id]);
 
+        //assert
         self::assertSame('', $output);
         self::assertSame('/vet/appointments', HeaderSpy::location());
         $updated = (new AppointmentRepository())->findById($appointment->id);
@@ -84,10 +92,13 @@ final class AppointmentControllerTest extends TestCase
 
     public function testConfirmIsNoOpForAnotherVetsAppointment(): void
     {
+        //arrange
         $appointment = (new AppointmentRepository())->create($this->petId, $this->otherVet->id, new DateTimeImmutable('+1 week'), null);
 
+        //act
         $output = $this->controller->confirm(['id' => (string) $appointment->id]);
 
+        //assert
         self::assertSame('', $output);
         self::assertSame('/vet/appointments', HeaderSpy::location());
         $updated = (new AppointmentRepository())->findById($appointment->id);
@@ -96,11 +107,14 @@ final class AppointmentControllerTest extends TestCase
 
     public function testCancelTransitionsConfirmedToCancelled(): void
     {
+        //arrange
         $appointment = (new AppointmentRepository())->create($this->petId, $this->vet->id, new DateTimeImmutable('+1 week'), null);
         (new AppointmentRepository())->updateStatus($appointment->id, AppointmentStatus::Confirmed);
 
+        //act
         $output = $this->controller->cancel(['id' => (string) $appointment->id]);
 
+        //assert
         self::assertSame('', $output);
         $updated = (new AppointmentRepository())->findById($appointment->id);
         self::assertSame(AppointmentStatus::Cancelled, $updated->status);
@@ -108,11 +122,14 @@ final class AppointmentControllerTest extends TestCase
 
     public function testCancelIsNoOpForCompletedAppointment(): void
     {
+        //arrange
         $appointment = (new AppointmentRepository())->create($this->petId, $this->vet->id, new DateTimeImmutable('+1 week'), null);
         (new AppointmentRepository())->updateStatus($appointment->id, AppointmentStatus::Completed);
 
+        //act
         $output = $this->controller->cancel(['id' => (string) $appointment->id]);
 
+        //assert
         self::assertSame('', $output);
         self::assertSame('/vet/appointments', HeaderSpy::location());
         $updated = (new AppointmentRepository())->findById($appointment->id);

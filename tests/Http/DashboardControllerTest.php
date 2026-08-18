@@ -34,20 +34,26 @@ final class DashboardControllerTest extends TestCase
 
     public function testIndexShowsLoggedInUserWhenSessionResolvesToAUser(): void
     {
+        //arrange
         $owner = $this->registerOwner($this->email);
         $this->loginAs($owner->userId, 'owner');
 
+        //act
         $output = $this->controller->index([]);
 
+        //assert
         self::assertStringContainsString("Logged in as {$this->email}", $output);
     }
 
     public function testIndexShowsFallbackWhenSessionUserDoesNotResolve(): void
     {
+        //arrange
         $this->loginAs(999_999_999, 'owner');
 
+        //act
         $output = $this->controller->index([]);
 
+        //assert
         self::assertStringContainsString('Session user not found.', $output);
     }
 }

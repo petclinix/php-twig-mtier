@@ -40,20 +40,26 @@ final class PetControllerTest extends TestCase
 
     public function testIndexListsOwnersPets(): void
     {
+        //arrange
         (new PetRepository())->create($this->owner->id, 'Rex', 'Dog', 'Labrador', null);
 
+        //act
         $output = $this->controller->index([]);
 
+        //assert
         self::assertStringContainsString('My Pets', $output);
         self::assertStringContainsString('Rex', $output);
     }
 
     public function testStoreWithValidDataCreatesPetAndRedirects(): void
     {
+        //arrange
         $_POST = ['name' => 'Milo', 'species' => 'Cat', 'breed' => '', 'birth_date' => ''];
 
+        //act
         $output = $this->controller->store([]);
 
+        //assert
         self::assertSame('', $output);
         self::assertSame('/owner/pets', HeaderSpy::location());
         $pets = (new PetRepository())->findAllByOwnerId($this->owner->id);
@@ -63,10 +69,13 @@ final class PetControllerTest extends TestCase
 
     public function testStoreWithoutNameShowsValidationErrorAndDoesNotCreatePet(): void
     {
+        //arrange
         $_POST = ['name' => '', 'species' => 'Cat', 'breed' => '', 'birth_date' => ''];
 
+        //act
         $output = $this->controller->store([]);
 
+        //assert
         self::assertStringContainsString('Name is required.', $output);
         self::assertSame([], HeaderSpy::$headers);
         self::assertCount(0, (new PetRepository())->findAllByOwnerId($this->owner->id));
@@ -74,10 +83,13 @@ final class PetControllerTest extends TestCase
 
     public function testStoreWithInvalidBirthDateShowsValidationError(): void
     {
+        //arrange
         $_POST = ['name' => 'Milo', 'species' => 'Cat', 'breed' => '', 'birth_date' => 'not-a-date'];
 
+        //act
         $output = $this->controller->store([]);
 
+        //assert
         self::assertStringContainsString('Birth date must be a valid date.', $output);
         self::assertSame([], HeaderSpy::$headers);
     }

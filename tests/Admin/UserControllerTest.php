@@ -45,16 +45,20 @@ final class UserControllerTest extends TestCase
 
     public function testIndexListsThisTestsFreshUser(): void
     {
+        //act
         $output = $this->controller->index([]);
 
+        //assert
         self::assertStringContainsString('Users', $output);
         self::assertStringContainsString($this->targetEmail, $output);
     }
 
     public function testDeactivateSetsTargetInactiveAndRedirects(): void
     {
+        //act
         $output = $this->controller->deactivate(['id' => (string) $this->target->id]);
 
+        //assert
         self::assertSame('', $output);
         self::assertSame('/admin/users', HeaderSpy::location());
         self::assertFalse((new UserRepository())->findById($this->target->id)->isActive);
@@ -62,10 +66,13 @@ final class UserControllerTest extends TestCase
 
     public function testActivateSetsTargetActiveAgain(): void
     {
+        //arrange
         (new UserRepository())->setActive($this->target->id, false);
 
+        //act
         $output = $this->controller->activate(['id' => (string) $this->target->id]);
 
+        //assert
         self::assertSame('', $output);
         self::assertSame('/admin/users', HeaderSpy::location());
         self::assertTrue((new UserRepository())->findById($this->target->id)->isActive);
@@ -73,8 +80,10 @@ final class UserControllerTest extends TestCase
 
     public function testDeactivateIsNoOpWhenActorTargetsSelf(): void
     {
+        //act
         $output = $this->controller->deactivate(['id' => (string) $this->actor->id]);
 
+        //assert
         self::assertSame('', $output);
         self::assertSame('/admin/users', HeaderSpy::location());
         self::assertTrue((new UserRepository())->findById($this->actor->id)->isActive);

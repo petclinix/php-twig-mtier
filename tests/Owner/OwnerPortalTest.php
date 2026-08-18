@@ -39,6 +39,7 @@ final class OwnerPortalTest extends TestCase
 
     public function testOwnerCanRegisterPetBookAppointmentAndSeeVisitHistory(): void
     {
+        //arrange
         $auth = new AuthService(new UserRepository(), new OwnerRepository(), new VetRepository(), new ActivityLogRepository());
 
         $ownerUser = $auth->register($this->ownerEmail, 'correct-horse', Role::Owner, [
@@ -59,30 +60,39 @@ final class OwnerPortalTest extends TestCase
         self::assertNotNull($owner);
         self::assertNotNull($vet);
 
+        //act
         $pet = (new PetRepository())->create($owner->id, 'Rex', 'Dog', 'Labrador', new DateTimeImmutable('2020-01-01'));
 
+        //assert
         $pets = (new PetRepository())->findAllByOwnerId($owner->id);
         self::assertCount(1, $pets);
         self::assertSame('Rex', $pets[0]->name);
 
+        //act
         $appointment = (new AppointmentRepository())->create(
             $pet->id,
             $vet->id,
             new DateTimeImmutable('+1 week'),
             'Annual checkup',
         );
+
+        //assert
         self::assertSame(AppointmentStatus::Requested, $appointment->status);
 
         $appointments = (new AppointmentRepository())->findAllByPetIds([$pet->id]);
         self::assertCount(1, $appointments);
         self::assertSame($appointment->id, $appointments[0]->id);
 
+        //arrange
         // Recording a visit is a Vet-phase feature (Phase 4); insert directly to verify the read path.
         Database::connection()
             ->prepare('INSERT INTO visits (appointment_id, diagnosis, notes) VALUES (:appointment_id, :diagnosis, :notes)')
             ->execute(['appointment_id' => $appointment->id, 'diagnosis' => 'Healthy', 'notes' => 'No concerns.']);
 
+        //act
         $visits = (new VisitRepository())->findAllByPetIds([$pet->id]);
+
+        //assert
         self::assertCount(1, $visits);
         self::assertSame('Healthy', $visits[0]->diagnosis);
     }

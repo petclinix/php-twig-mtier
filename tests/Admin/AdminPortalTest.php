@@ -36,6 +36,7 @@ final class AdminPortalTest extends TestCase
 
     public function testAdminCanDeactivateAndReactivateAUserWithActivityLogged(): void
     {
+        //arrange
         $activityLog = new ActivityLogRepository();
         $auth = new AuthService(new UserRepository(), new OwnerRepository(), new VetRepository(), $activityLog);
         $users = new UserRepository();
@@ -56,8 +57,11 @@ final class AdminPortalTest extends TestCase
         self::assertTrue($ownerUser->isActive);
 
         $adminService = new AdminService($users, $activityLog);
+
+        //act
         $adminService->setUserActive($admin->id, $ownerUser->id, false);
 
+        //assert
         $deactivated = $users->findById($ownerUser->id);
         self::assertNotNull($deactivated);
         self::assertFalse($deactivated->isActive);
@@ -67,7 +71,10 @@ final class AdminPortalTest extends TestCase
         self::assertNotNull($stillAuthenticates);
         self::assertFalse($stillAuthenticates->isActive);
 
+        //act
         $adminService->setUserActive($admin->id, $ownerUser->id, true);
+
+        //assert
         $reactivated = $users->findById($ownerUser->id);
         self::assertNotNull($reactivated);
         self::assertTrue($reactivated->isActive);

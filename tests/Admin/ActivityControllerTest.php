@@ -31,14 +31,17 @@ final class ActivityControllerTest extends TestCase
 
     public function testIndexShowsThisTestsOwnFreshRegistrationEntry(): void
     {
+        //arrange
         // Registering via AuthService writes a 'user_registered' activity_log
         // row (see AuthService::register) — a deterministic, test-owned
         // signal to look for, since findRecent(100) is globally scoped and
         // the shared test DB accumulates rows from every other test run.
         $this->registerOwner($this->email);
 
+        //act
         $output = $this->controller->index([]);
 
+        //assert
         self::assertStringContainsString('Activity Log', $output);
         self::assertStringContainsString($this->email, $output);
         self::assertStringContainsString('user_registered', $output);

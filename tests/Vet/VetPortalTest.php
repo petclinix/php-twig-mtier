@@ -41,6 +41,7 @@ final class VetPortalTest extends TestCase
 
     public function testVetCanManageAvailabilityAndAppointmentLifecycle(): void
     {
+        //arrange
         $auth = new AuthService(new UserRepository(), new OwnerRepository(), new VetRepository(), new ActivityLogRepository());
 
         $ownerUser = $auth->register($this->ownerEmail, 'correct-horse', Role::Owner, [
@@ -60,28 +61,45 @@ final class VetPortalTest extends TestCase
         self::assertNotNull($owner);
         self::assertNotNull($vet);
 
+        //act
         $availabilityRepository = new AvailabilityRepository();
         $slot = $availabilityRepository->create($vet->id, new DateTimeImmutable('+1 day 09:00'), new DateTimeImmutable('+1 day 17:00'));
+
+        //assert
         self::assertCount(1, $availabilityRepository->findAllByVetId($vet->id));
 
+        //act
         $availabilityRepository->delete($slot->id, $vet->id);
+
+        //assert
         self::assertCount(0, $availabilityRepository->findAllByVetId($vet->id));
 
+        //arrange
         $pet = (new PetRepository())->create($owner->id, 'Rex', 'Dog', null, null);
         $appointmentRepository = new AppointmentRepository();
+
+        //act
         $appointment = $appointmentRepository->create($pet->id, $vet->id, new DateTimeImmutable('+1 week'), 'Checkup');
+
+        //assert
         self::assertSame(AppointmentStatus::Requested, $appointment->status);
 
         $found = $appointmentRepository->findAllByVetId($vet->id);
         self::assertCount(1, $found);
         self::assertSame($appointment->id, $found[0]->id);
 
+        //act
         $appointmentRepository->updateStatus($appointment->id, AppointmentStatus::Confirmed);
         $confirmed = $appointmentRepository->findById($appointment->id);
+
+        //assert
         self::assertSame(AppointmentStatus::Confirmed, $confirmed->status);
 
+        //act
         $visitService = new VisitService($appointmentRepository, new VisitRepository());
         $visit = $visitService->recordVisit($confirmed, 'Healthy', 'No concerns.');
+
+        //assert
         self::assertSame('Healthy', $visit->diagnosis);
 
         $completed = $appointmentRepository->findById($appointment->id);

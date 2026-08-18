@@ -13,11 +13,14 @@ final class HomeControllerTest extends TestCase
 {
     public function testIndexRendersHomeTemplate(): void
     {
+        //arrange
         $twig = new Environment(new FilesystemLoader(__DIR__ . '/../../templates'));
         $controller = new HomeController($twig);
 
+        //act
         $output = $controller->index([]);
 
+        //assert
         self::assertStringContainsString('PetcliniX', $output);
     }
 }

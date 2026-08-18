@@ -39,6 +39,7 @@ final class AuthServiceTest extends TestCase
 
     public function testRegisterOwnerAndAttemptLogin(): void
     {
+        //act
         $user = $this->auth->register($this->email, 'correct-horse', Role::Owner, [
             'first_name' => 'Jane',
             'last_name' => 'Doe',
@@ -46,25 +47,31 @@ final class AuthServiceTest extends TestCase
             'address' => '1 Main St',
         ]);
 
+        //assert
         self::assertSame(Role::Owner, $user->role);
 
+        //act
         $authenticated = $this->auth->attempt($this->email, 'correct-horse');
+
+        //assert
         self::assertNotNull($authenticated);
         self::assertSame($user->id, $authenticated->id);
 
+        //act + assert
         self::assertNull($this->auth->attempt($this->email, 'wrong-password'));
     }
 
     public function testRegisterRejectsDuplicateEmail(): void
     {
+        //arrange
         $this->auth->register($this->email, 'correct-horse', Role::Vet, [
             'first_name' => 'John',
             'last_name' => 'Smith',
             'specialty' => 'Surgery',
         ]);
-
         $this->expectException(EmailAlreadyRegisteredException::class);
 
+        //act + assert
         $this->auth->register($this->email, 'another-password', Role::Vet, [
             'first_name' => 'John',
             'last_name' => 'Smith',
