@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Vet;
 
 use App\Domain\AppointmentStatus;
+use App\Domain\Owner;
 use App\Domain\Role;
+use App\Domain\Vet;
 use App\Infrastructure\Database;
 use App\Repository\ActivityLogRepository;
 use App\Repository\AppointmentRepository;
@@ -24,24 +26,15 @@ final class VetPortalTest extends TestCase
 {
     private string $ownerEmail;
     private string $vetEmail;
+    private Owner $owner;
+    private Vet $vet;
 
     protected function setUp(): void
     {
         $suffix = bin2hex(random_bytes(6));
         $this->ownerEmail = "owner-{$suffix}@example.test";
         $this->vetEmail = "vet-{$suffix}@example.test";
-    }
 
-    protected function tearDown(): void
-    {
-        Database::connection()
-            ->prepare('DELETE FROM users WHERE email IN (:owner, :vet)')
-            ->execute(['owner' => $this->ownerEmail, 'vet' => $this->vetEmail]);
-    }
-
-    public function testVetCanManageAvailabilityAndAppointmentLifecycle(): void
-    {
-        //arrange
         $auth = new AuthService(new UserRepository(), new OwnerRepository(), new VetRepository(), new ActivityLogRepository());
 
         $ownerUser = $auth->register($this->ownerEmail, 'correct-horse', Role::Owner, [
@@ -56,55 +49,90 @@ final class VetPortalTest extends TestCase
             'specialty' => 'Surgery',
         ]);
 
-        $owner = (new OwnerRepository())->findByUserId($ownerUser->id);
-        $vet = (new VetRepository())->findByUserId($vetUser->id);
-        self::assertNotNull($owner);
-        self::assertNotNull($vet);
+        $this->owner = (new OwnerRepository())->findByUserId($ownerUser->id);
+        $this->vet = (new VetRepository())->findByUserId($vetUser->id);
+    }
 
-        //act
-        $availabilityRepository = new AvailabilityRepository();
-        $slot = $availabilityRepository->create($vet->id, new DateTimeImmutable('+1 day 09:00'), new DateTimeImmutable('+1 day 17:00'));
+    protected function tearDown(): void
+    {
+        Database::connection()
+            ->prepare('DELETE FROM users WHERE email IN (:owner, :vet)')
+            ->execute(['owner' => $this->ownerEmail, 'vet' => $this->vetEmail]);
+    }
 
-        //assert
-        self::assertCount(1, $availabilityRepository->findAllByVetId($vet->id));
-
-        //act
-        $availabilityRepository->delete($slot->id, $vet->id);
-
-        //assert
-        self::assertCount(0, $availabilityRepository->findAllByVetId($vet->id));
-
+    public function testVetCanCreateAvailabilitySlot(): void
+    {
         //arrange
-        $pet = (new PetRepository())->create($owner->id, 'Rex', 'Dog', null, null);
+        $availabilityRepository = new AvailabilityRepository();
+
+        //act
+        $availabilityRepository->create($this->vet->id, new DateTimeImmutable('+1 day 09:00'), new DateTimeImmutable('+1 day 17:00'));
+
+        //assert
+        self::assertCount(1, $availabilityRepository->findAllByVetId($this->vet->id));
+    }
+
+    public function testVetCanDeleteAvailabilitySlot(): void
+    {
+        //arrange
+        $availabilityRepository = new AvailabilityRepository();
+        $slot = $availabilityRepository->create($this->vet->id, new DateTimeImmutable('+1 day 09:00'), new DateTimeImmutable('+1 day 17:00'));
+
+        //act
+        $availabilityRepository->delete($slot->id, $this->vet->id);
+
+        //assert
+        self::assertCount(0, $availabilityRepository->findAllByVetId($this->vet->id));
+    }
+
+    public function testAppointmentIsCreatedAsRequestedAndListedForVet(): void
+    {
+        //arrange
+        $pet = (new PetRepository())->create($this->owner->id, 'Rex', 'Dog', null, null);
         $appointmentRepository = new AppointmentRepository();
 
         //act
-        $appointment = $appointmentRepository->create($pet->id, $vet->id, new DateTimeImmutable('+1 week'), 'Checkup');
+        $appointment = $appointmentRepository->create($pet->id, $this->vet->id, new DateTimeImmutable('+1 week'), 'Checkup');
 
         //assert
         self::assertSame(AppointmentStatus::Requested, $appointment->status);
-
-        $found = $appointmentRepository->findAllByVetId($vet->id);
+        $found = $appointmentRepository->findAllByVetId($this->vet->id);
         self::assertCount(1, $found);
         self::assertSame($appointment->id, $found[0]->id);
+    }
+
+    public function testVetCanConfirmAppointment(): void
+    {
+        //arrange
+        $pet = (new PetRepository())->create($this->owner->id, 'Rex', 'Dog', null, null);
+        $appointmentRepository = new AppointmentRepository();
+        $appointment = $appointmentRepository->create($pet->id, $this->vet->id, new DateTimeImmutable('+1 week'), 'Checkup');
 
         //act
         $appointmentRepository->updateStatus($appointment->id, AppointmentStatus::Confirmed);
-        $confirmed = $appointmentRepository->findById($appointment->id);
 
         //assert
+        $confirmed = $appointmentRepository->findById($appointment->id);
         self::assertSame(AppointmentStatus::Confirmed, $confirmed->status);
+    }
+
+    public function testVetCanRecordVisitWhichCompletesTheAppointment(): void
+    {
+        //arrange
+        $pet = (new PetRepository())->create($this->owner->id, 'Rex', 'Dog', null, null);
+        $appointmentRepository = new AppointmentRepository();
+        $appointment = $appointmentRepository->create($pet->id, $this->vet->id, new DateTimeImmutable('+1 week'), 'Checkup');
+        $appointmentRepository->updateStatus($appointment->id, AppointmentStatus::Confirmed);
+        $confirmed = $appointmentRepository->findById($appointment->id);
+        $visitService = new VisitService($appointmentRepository, new VisitRepository());
 
         //act
-        $visitService = new VisitService($appointmentRepository, new VisitRepository());
         $visit = $visitService->recordVisit($confirmed, 'Healthy', 'No concerns.');
 
         //assert
         self::assertSame('Healthy', $visit->diagnosis);
-
         $completed = $appointmentRepository->findById($appointment->id);
         self::assertSame(AppointmentStatus::Completed, $completed->status);
-
         $visits = (new VisitRepository())->findAllByPetIds([$pet->id]);
         self::assertCount(1, $visits);
         self::assertSame($visit->id, $visits[0]->id);
