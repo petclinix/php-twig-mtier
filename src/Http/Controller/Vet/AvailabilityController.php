@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controller\Vet;
 
+use App\Http\Validation\ErrorBag;
+use App\Http\Validation\Input;
+use App\Http\Validation\Validate;
 use App\Repository\AvailabilityRepository;
-use DateTimeImmutable;
 use Twig\Environment;
 
 final class AvailabilityController
@@ -34,36 +36,29 @@ final class AvailabilityController
     {
         $vet = $this->currentVet();
 
-        $startsAtInput = trim((string) ($_POST['starts_at'] ?? ''));
-        $endsAtInput = trim((string) ($_POST['ends_at'] ?? ''));
-
-        $errors = [];
+        $errors = new ErrorBag();
         $startsAt = null;
         $endsAt = null;
 
+        $startsAtInput = Input::string('starts_at');
         if ($startsAtInput === '') {
-            $errors[] = 'Choose a start time.';
+            $errors->add('Choose a start time.');
         } else {
-            $startsAt = DateTimeImmutable::createFromFormat('Y-m-d\TH:i', $startsAtInput) ?: null;
-            if ($startsAt === null) {
-                $errors[] = 'Start time must be valid.';
-            }
+            $startsAt = Validate::date($startsAtInput, 'Y-m-d\TH:i');
+            $errors->addIf($startsAt === null, 'Start time must be valid.');
         }
 
+        $endsAtInput = Input::string('ends_at');
         if ($endsAtInput === '') {
-            $errors[] = 'Choose an end time.';
+            $errors->add('Choose an end time.');
         } else {
-            $endsAt = DateTimeImmutable::createFromFormat('Y-m-d\TH:i', $endsAtInput) ?: null;
-            if ($endsAt === null) {
-                $errors[] = 'End time must be valid.';
-            }
+            $endsAt = Validate::date($endsAtInput, 'Y-m-d\TH:i');
+            $errors->addIf($endsAt === null, 'End time must be valid.');
         }
 
-        if ($startsAt !== null && $endsAt !== null && $endsAt <= $startsAt) {
-            $errors[] = 'End time must be after the start time.';
-        }
+        $errors->addIf($startsAt !== null && $endsAt !== null && $endsAt <= $startsAt, 'End time must be after the start time.');
 
-        if ($errors === [] && $startsAt !== null && $endsAt !== null) {
+        if ($errors->isEmpty() && $startsAt !== null && $endsAt !== null) {
             (new AvailabilityRepository())->create($vet->id, $startsAt, $endsAt);
 
             header('Location: /vet/availability');
@@ -73,7 +68,7 @@ final class AvailabilityController
 
         $slots = (new AvailabilityRepository())->findAllByVetId($vet->id);
 
-        return $this->twig->render('vet/availability/index.html.twig', ['slots' => $slots, 'errors' => $errors, 'old' => $_POST]);
+        return $this->twig->render('vet/availability/index.html.twig', ['slots' => $slots, 'errors' => $errors->all(), 'old' => $_POST]);
     }
 
     /**

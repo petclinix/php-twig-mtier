@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controller\Owner;
 
+use App\Http\Validation\ErrorBag;
+use App\Http\Validation\Input;
+use App\Http\Validation\Validate;
 use App\Repository\PetRepository;
-use DateTimeImmutable;
 use Twig\Environment;
 
 final class PetController
@@ -34,29 +36,21 @@ final class PetController
     {
         $owner = $this->currentOwner();
 
-        $name = trim((string) ($_POST['name'] ?? ''));
-        $species = trim((string) ($_POST['species'] ?? ''));
-        $breed = trim((string) ($_POST['breed'] ?? ''));
-        $birthDateInput = trim((string) ($_POST['birth_date'] ?? ''));
+        $errors = new ErrorBag();
 
-        $errors = [];
+        $name = Input::string('name');
+        $errors->addIf($name === '', 'Name is required.');
 
-        if ($name === '') {
-            $errors[] = 'Name is required.';
-        }
-        if ($species === '') {
-            $errors[] = 'Species is required.';
-        }
+        $species = Input::string('species');
+        $errors->addIf($species === '', 'Species is required.');
 
-        $birthDate = null;
-        if ($birthDateInput !== '') {
-            $birthDate = DateTimeImmutable::createFromFormat('Y-m-d', $birthDateInput) ?: null;
-            if ($birthDate === null) {
-                $errors[] = 'Birth date must be a valid date.';
-            }
-        }
+        $breed = Input::string('breed');
 
-        if ($errors === []) {
+        $birthDateInput = Input::string('birth_date');
+        $birthDate = Validate::date($birthDateInput, 'Y-m-d');
+        $errors->addIf($birthDateInput !== '' && $birthDate === null, 'Birth date must be a valid date.');
+
+        if ($errors->isEmpty()) {
             (new PetRepository())->create($owner->id, $name, $species, $breed !== '' ? $breed : null, $birthDate);
 
             header('Location: /owner/pets');
@@ -66,6 +60,6 @@ final class PetController
 
         $pets = (new PetRepository())->findAllByOwnerId($owner->id);
 
-        return $this->twig->render('owner/pets/index.html.twig', ['pets' => $pets, 'errors' => $errors, 'old' => $_POST]);
+        return $this->twig->render('owner/pets/index.html.twig', ['pets' => $pets, 'errors' => $errors->all(), 'old' => $_POST]);
     }
 }

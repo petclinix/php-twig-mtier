@@ -6,6 +6,8 @@ namespace App\Http\Controller;
 
 use App\Domain\Role;
 use App\Http\Session;
+use App\Http\Validation\ErrorBag;
+use App\Http\Validation\Input;
 use App\Repository\ActivityLogRepository;
 use App\Repository\OwnerRepository;
 use App\Repository\UserRepository;
@@ -41,41 +43,31 @@ final class AuthController
      */
     public function register(array $vars): string
     {
-        $email = trim((string) ($_POST['email'] ?? ''));
-        $password = (string) ($_POST['password'] ?? '');
-        $passwordConfirmation = (string) ($_POST['password_confirmation'] ?? '');
-        $roleInput = (string) ($_POST['role'] ?? '');
-        $firstName = trim((string) ($_POST['first_name'] ?? ''));
-        $lastName = trim((string) ($_POST['last_name'] ?? ''));
-        $phone = trim((string) ($_POST['phone'] ?? ''));
-        $address = trim((string) ($_POST['address'] ?? ''));
-        $specialty = trim((string) ($_POST['specialty'] ?? ''));
+        $errors = new ErrorBag();
 
-        $errors = [];
+        $email = Input::string('email');
+        $errors->addIf($email === '' || filter_var($email, FILTER_VALIDATE_EMAIL) === false, 'Enter a valid email address.');
 
-        if ($email === '' || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
-            $errors[] = 'Enter a valid email address.';
-        }
-        if (strlen($password) < 8) {
-            $errors[] = 'Password must be at least 8 characters.';
-        }
-        if ($password !== $passwordConfirmation) {
-            $errors[] = 'Passwords do not match.';
-        }
-        if (!in_array($roleInput, ['owner', 'vet'], true)) {
-            $errors[] = 'Choose a role.';
-        }
-        if ($firstName === '' || $lastName === '') {
-            $errors[] = 'First and last name are required.';
-        }
-        if ($roleInput === 'owner' && ($phone === '' || $address === '')) {
-            $errors[] = 'Phone and address are required for owners.';
-        }
-        if ($roleInput === 'vet' && $specialty === '') {
-            $errors[] = 'Specialty is required for vets.';
-        }
+        $password = Input::raw('password');
+        $passwordConfirmation = Input::raw('password_confirmation');
+        $errors->addIf(strlen($password) < 8, 'Password must be at least 8 characters.');
+        $errors->addIf($password !== $passwordConfirmation, 'Passwords do not match.');
 
-        if ($errors === []) {
+        $roleInput = Input::raw('role');
+        $errors->addIf(!in_array($roleInput, ['owner', 'vet'], true), 'Choose a role.');
+
+        $firstName = Input::string('first_name');
+        $lastName = Input::string('last_name');
+        $errors->addIf($firstName === '' || $lastName === '', 'First and last name are required.');
+
+        $phone = Input::string('phone');
+        $address = Input::string('address');
+        $errors->addIf($roleInput === 'owner' && ($phone === '' || $address === ''), 'Phone and address are required for owners.');
+
+        $specialty = Input::string('specialty');
+        $errors->addIf($roleInput === 'vet' && $specialty === '', 'Specialty is required for vets.');
+
+        if ($errors->isEmpty()) {
             $role = Role::from($roleInput);
             $profile = $role === Role::Owner
                 ? ['first_name' => $firstName, 'last_name' => $lastName, 'phone' => $phone, 'address' => $address]
@@ -89,11 +81,11 @@ final class AuthController
 
                 return '';
             } catch (EmailAlreadyRegisteredException) {
-                $errors[] = 'An account with that email already exists.';
+                $errors->add('An account with that email already exists.');
             }
         }
 
-        return $this->twig->render('auth/register.html.twig', ['errors' => $errors, 'old' => $_POST]);
+        return $this->twig->render('auth/register.html.twig', ['errors' => $errors->all(), 'old' => $_POST]);
     }
 
     /**
