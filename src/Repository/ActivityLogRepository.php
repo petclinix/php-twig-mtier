@@ -5,32 +5,24 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Domain\ActivityLogEntry;
-use App\Infrastructure\Database;
 use DateTimeImmutable;
 use PDO;
 
-final class ActivityLogRepository
+final class ActivityLogRepository extends AbstractRepository
 {
-    private readonly PDO $pdo;
-
-    public function __construct()
-    {
-        $this->pdo = Database::connection();
-    }
-
     /**
      * @param array<string, mixed>|null $context
      */
     public function record(?int $userId, string $action, ?array $context = null): void
     {
-        $stmt = $this->pdo->prepare(
-            'INSERT INTO activity_log (user_id, action, context) VALUES (:user_id, :action, :context)'
+        $this->execute(
+            'INSERT INTO activity_log (user_id, action, context) VALUES (:user_id, :action, :context)',
+            [
+                'user_id' => $userId,
+                'action' => $action,
+                'context' => $context !== null ? json_encode($context, JSON_THROW_ON_ERROR) : null,
+            ],
         );
-        $stmt->execute([
-            'user_id' => $userId,
-            'action' => $action,
-            'context' => $context !== null ? json_encode($context, JSON_THROW_ON_ERROR) : null,
-        ]);
     }
 
     /**
@@ -38,6 +30,8 @@ final class ActivityLogRepository
      */
     public function findRecent(int $limit = 100): array
     {
+        // LIMIT needs an explicit PDO::PARAM_INT bind, which the generic
+        // execute()/fetchAll() helpers don't support, so this stays hand-rolled.
         $stmt = $this->pdo->prepare(
             'SELECT id, user_id, action, context, created_at FROM activity_log ORDER BY created_at DESC, id DESC LIMIT :limit'
         );

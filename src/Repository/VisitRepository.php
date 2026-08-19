@@ -5,42 +5,31 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Domain\Visit;
-use App\Infrastructure\Database;
 use DateTimeImmutable;
-use PDO;
 
-final class VisitRepository
+final class VisitRepository extends AbstractRepository
 {
-    private readonly PDO $pdo;
-
-    public function __construct()
-    {
-        $this->pdo = Database::connection();
-    }
-
     public function create(int $appointmentId, ?string $diagnosis, ?string $notes): Visit
     {
-        $stmt = $this->pdo->prepare(
-            'INSERT INTO visits (appointment_id, diagnosis, notes) VALUES (:appointment_id, :diagnosis, :notes)'
+        $this->execute(
+            'INSERT INTO visits (appointment_id, diagnosis, notes) VALUES (:appointment_id, :diagnosis, :notes)',
+            [
+                'appointment_id' => $appointmentId,
+                'diagnosis' => $diagnosis,
+                'notes' => $notes,
+            ],
         );
-        $stmt->execute([
-            'appointment_id' => $appointmentId,
-            'diagnosis' => $diagnosis,
-            'notes' => $notes,
-        ]);
 
-        $id = (int) $this->pdo->lastInsertId();
-
-        return $this->findById($id) ?? throw VisitPersistenceException::failedToLoadAfterInsert();
+        return $this->findById($this->lastInsertId()) ?? throw VisitPersistenceException::failedToLoadAfterInsert();
     }
 
     public function findById(int $id): ?Visit
     {
-        $stmt = $this->pdo->prepare('SELECT id, appointment_id, diagnosis, notes, recorded_at FROM visits WHERE id = :id');
-        $stmt->execute(['id' => $id]);
-        $row = $stmt->fetch();
-
-        return $row === false ? null : $this->hydrate($row);
+        return $this->fetchOne(
+            'SELECT id, appointment_id, diagnosis, notes, recorded_at FROM visits WHERE id = :id',
+            ['id' => $id],
+            $this->hydrate(...),
+        );
     }
 
     /**
@@ -54,16 +43,16 @@ final class VisitRepository
         }
 
         $placeholders = implode(',', array_fill(0, count($petIds), '?'));
-        $stmt = $this->pdo->prepare(
+
+        return $this->fetchAll(
             "SELECT v.id, v.appointment_id, v.diagnosis, v.notes, v.recorded_at
              FROM visits v
              INNER JOIN appointments a ON a.id = v.appointment_id
              WHERE a.pet_id IN ($placeholders)
-             ORDER BY v.recorded_at DESC"
+             ORDER BY v.recorded_at DESC",
+            $petIds,
+            $this->hydrate(...),
         );
-        $stmt->execute($petIds);
-
-        return array_map($this->hydrate(...), $stmt->fetchAll());
     }
 
     /**

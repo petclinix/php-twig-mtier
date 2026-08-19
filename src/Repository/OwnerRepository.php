@@ -5,53 +5,40 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Domain\Owner;
-use App\Infrastructure\Database;
-use PDO;
 
-final class OwnerRepository
+final class OwnerRepository extends AbstractRepository
 {
-    private readonly PDO $pdo;
-
-    public function __construct()
-    {
-        $this->pdo = Database::connection();
-    }
-
     public function createProfile(int $userId, string $firstName, string $lastName, string $phone, string $address): void
     {
-        $stmt = $this->pdo->prepare(
+        $this->execute(
             'INSERT INTO owners (user_id, first_name, last_name, phone, address)
-             VALUES (:user_id, :first_name, :last_name, :phone, :address)'
+             VALUES (:user_id, :first_name, :last_name, :phone, :address)',
+            [
+                'user_id' => $userId,
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'phone' => $phone,
+                'address' => $address,
+            ],
         );
-        $stmt->execute([
-            'user_id' => $userId,
-            'first_name' => $firstName,
-            'last_name' => $lastName,
-            'phone' => $phone,
-            'address' => $address,
-        ]);
     }
 
     public function findByUserId(int $userId): ?Owner
     {
-        $stmt = $this->pdo->prepare(
-            'SELECT id, user_id, first_name, last_name, phone, address FROM owners WHERE user_id = :user_id'
+        return $this->fetchOne(
+            'SELECT id, user_id, first_name, last_name, phone, address FROM owners WHERE user_id = :user_id',
+            ['user_id' => $userId],
+            $this->hydrate(...),
         );
-        $stmt->execute(['user_id' => $userId]);
-        $row = $stmt->fetch();
-
-        return $row === false ? null : $this->hydrate($row);
     }
 
     public function findById(int $id): ?Owner
     {
-        $stmt = $this->pdo->prepare(
-            'SELECT id, user_id, first_name, last_name, phone, address FROM owners WHERE id = :id'
+        return $this->fetchOne(
+            'SELECT id, user_id, first_name, last_name, phone, address FROM owners WHERE id = :id',
+            ['id' => $id],
+            $this->hydrate(...),
         );
-        $stmt->execute(['id' => $id]);
-        $row = $stmt->fetch();
-
-        return $row === false ? null : $this->hydrate($row);
     }
 
     /**

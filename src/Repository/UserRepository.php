@@ -6,39 +6,26 @@ namespace App\Repository;
 
 use App\Domain\Role;
 use App\Domain\User;
-use App\Infrastructure\Database;
 use DateTimeImmutable;
-use PDO;
 
-final class UserRepository
+final class UserRepository extends AbstractRepository
 {
-    private readonly PDO $pdo;
-
-    public function __construct()
-    {
-        $this->pdo = Database::connection();
-    }
-
     public function findByEmail(string $email): ?User
     {
-        $stmt = $this->pdo->prepare(
-            'SELECT id, email, password_hash, role, is_active, created_at FROM users WHERE email = :email'
+        return $this->fetchOne(
+            'SELECT id, email, password_hash, role, is_active, created_at FROM users WHERE email = :email',
+            ['email' => $email],
+            $this->hydrate(...),
         );
-        $stmt->execute(['email' => $email]);
-        $row = $stmt->fetch();
-
-        return $row === false ? null : $this->hydrate($row);
     }
 
     public function findById(int $id): ?User
     {
-        $stmt = $this->pdo->prepare(
-            'SELECT id, email, password_hash, role, is_active, created_at FROM users WHERE id = :id'
+        return $this->fetchOne(
+            'SELECT id, email, password_hash, role, is_active, created_at FROM users WHERE id = :id',
+            ['id' => $id],
+            $this->hydrate(...),
         );
-        $stmt->execute(['id' => $id]);
-        $row = $stmt->fetch();
-
-        return $row === false ? null : $this->hydrate($row);
     }
 
     /**
@@ -46,33 +33,33 @@ final class UserRepository
      */
     public function findAll(): array
     {
-        $stmt = $this->pdo->query(
-            'SELECT id, email, password_hash, role, is_active, created_at FROM users ORDER BY created_at DESC'
+        return $this->fetchAll(
+            'SELECT id, email, password_hash, role, is_active, created_at FROM users ORDER BY created_at DESC',
+            [],
+            $this->hydrate(...),
         );
-
-        return array_map($this->hydrate(...), $stmt->fetchAll());
     }
 
     public function create(string $email, string $passwordHash, Role $role): User
     {
-        $stmt = $this->pdo->prepare(
-            'INSERT INTO users (email, password_hash, role) VALUES (:email, :password_hash, :role)'
+        $this->execute(
+            'INSERT INTO users (email, password_hash, role) VALUES (:email, :password_hash, :role)',
+            [
+                'email' => $email,
+                'password_hash' => $passwordHash,
+                'role' => $role->value,
+            ],
         );
-        $stmt->execute([
-            'email' => $email,
-            'password_hash' => $passwordHash,
-            'role' => $role->value,
-        ]);
 
-        $id = (int) $this->pdo->lastInsertId();
-
-        return $this->findById($id) ?? throw UserPersistenceException::failedToLoadAfterInsert();
+        return $this->findById($this->lastInsertId()) ?? throw UserPersistenceException::failedToLoadAfterInsert();
     }
 
     public function setActive(int $id, bool $active): void
     {
-        $stmt = $this->pdo->prepare('UPDATE users SET is_active = :is_active WHERE id = :id');
-        $stmt->execute(['is_active' => $active ? 1 : 0, 'id' => $id]);
+        $this->execute(
+            'UPDATE users SET is_active = :is_active WHERE id = :id',
+            ['is_active' => $active ? 1 : 0, 'id' => $id],
+        );
     }
 
     /**

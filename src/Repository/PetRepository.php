@@ -5,45 +5,34 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Domain\Pet;
-use App\Infrastructure\Database;
 use DateTimeImmutable;
-use PDO;
 
-final class PetRepository
+final class PetRepository extends AbstractRepository
 {
-    private readonly PDO $pdo;
-
-    public function __construct()
-    {
-        $this->pdo = Database::connection();
-    }
-
     public function create(int $ownerId, string $name, string $species, ?string $breed, ?DateTimeImmutable $birthDate): Pet
     {
-        $stmt = $this->pdo->prepare(
+        $this->execute(
             'INSERT INTO pets (owner_id, name, species, breed, birth_date)
-             VALUES (:owner_id, :name, :species, :breed, :birth_date)'
+             VALUES (:owner_id, :name, :species, :breed, :birth_date)',
+            [
+                'owner_id' => $ownerId,
+                'name' => $name,
+                'species' => $species,
+                'breed' => $breed,
+                'birth_date' => $birthDate?->format('Y-m-d'),
+            ],
         );
-        $stmt->execute([
-            'owner_id' => $ownerId,
-            'name' => $name,
-            'species' => $species,
-            'breed' => $breed,
-            'birth_date' => $birthDate?->format('Y-m-d'),
-        ]);
 
-        $id = (int) $this->pdo->lastInsertId();
-
-        return $this->findById($id) ?? throw PetPersistenceException::failedToLoadAfterInsert();
+        return $this->findById($this->lastInsertId()) ?? throw PetPersistenceException::failedToLoadAfterInsert();
     }
 
     public function findById(int $id): ?Pet
     {
-        $stmt = $this->pdo->prepare('SELECT id, owner_id, name, species, breed, birth_date FROM pets WHERE id = :id');
-        $stmt->execute(['id' => $id]);
-        $row = $stmt->fetch();
-
-        return $row === false ? null : $this->hydrate($row);
+        return $this->fetchOne(
+            'SELECT id, owner_id, name, species, breed, birth_date FROM pets WHERE id = :id',
+            ['id' => $id],
+            $this->hydrate(...),
+        );
     }
 
     /**
@@ -51,12 +40,11 @@ final class PetRepository
      */
     public function findAllByOwnerId(int $ownerId): array
     {
-        $stmt = $this->pdo->prepare(
-            'SELECT id, owner_id, name, species, breed, birth_date FROM pets WHERE owner_id = :owner_id ORDER BY name'
+        return $this->fetchAll(
+            'SELECT id, owner_id, name, species, breed, birth_date FROM pets WHERE owner_id = :owner_id ORDER BY name',
+            ['owner_id' => $ownerId],
+            $this->hydrate(...),
         );
-        $stmt->execute(['owner_id' => $ownerId]);
-
-        return array_map($this->hydrate(...), $stmt->fetchAll());
     }
 
     /**

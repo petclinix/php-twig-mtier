@@ -6,18 +6,9 @@ namespace App\Repository;
 
 use App\Domain\AppointmentStatus;
 use App\Domain\Stats;
-use App\Infrastructure\Database;
-use PDO;
 
-final class StatsRepository
+final class StatsRepository extends AbstractRepository
 {
-    private readonly PDO $pdo;
-
-    public function __construct()
-    {
-        $this->pdo = Database::connection();
-    }
-
     public function summary(): Stats
     {
         $ownerCount = (int) $this->pdo->query('SELECT COUNT(*) FROM owners')->fetchColumn();

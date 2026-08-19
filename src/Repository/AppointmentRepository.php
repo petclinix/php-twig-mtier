@@ -6,46 +6,33 @@ namespace App\Repository;
 
 use App\Domain\Appointment;
 use App\Domain\AppointmentStatus;
-use App\Infrastructure\Database;
 use DateTimeImmutable;
-use PDO;
 
-final class AppointmentRepository
+final class AppointmentRepository extends AbstractRepository
 {
-    private readonly PDO $pdo;
-
-    public function __construct()
-    {
-        $this->pdo = Database::connection();
-    }
-
     public function create(int $petId, int $vetId, DateTimeImmutable $scheduledAt, ?string $reason): Appointment
     {
-        $stmt = $this->pdo->prepare(
+        $this->execute(
             'INSERT INTO appointments (pet_id, vet_id, scheduled_at, reason)
-             VALUES (:pet_id, :vet_id, :scheduled_at, :reason)'
+             VALUES (:pet_id, :vet_id, :scheduled_at, :reason)',
+            [
+                'pet_id' => $petId,
+                'vet_id' => $vetId,
+                'scheduled_at' => $scheduledAt->format('Y-m-d H:i:s'),
+                'reason' => $reason,
+            ],
         );
-        $stmt->execute([
-            'pet_id' => $petId,
-            'vet_id' => $vetId,
-            'scheduled_at' => $scheduledAt->format('Y-m-d H:i:s'),
-            'reason' => $reason,
-        ]);
 
-        $id = (int) $this->pdo->lastInsertId();
-
-        return $this->findById($id) ?? throw AppointmentPersistenceException::failedToLoadAfterInsert();
+        return $this->findById($this->lastInsertId()) ?? throw AppointmentPersistenceException::failedToLoadAfterInsert();
     }
 
     public function findById(int $id): ?Appointment
     {
-        $stmt = $this->pdo->prepare(
-            'SELECT id, pet_id, vet_id, scheduled_at, status, reason, created_at FROM appointments WHERE id = :id'
+        return $this->fetchOne(
+            'SELECT id, pet_id, vet_id, scheduled_at, status, reason, created_at FROM appointments WHERE id = :id',
+            ['id' => $id],
+            $this->hydrate(...),
         );
-        $stmt->execute(['id' => $id]);
-        $row = $stmt->fetch();
-
-        return $row === false ? null : $this->hydrate($row);
     }
 
     /**
@@ -59,13 +46,13 @@ final class AppointmentRepository
         }
 
         $placeholders = implode(',', array_fill(0, count($petIds), '?'));
-        $stmt = $this->pdo->prepare(
-            "SELECT id, pet_id, vet_id, scheduled_at, status, reason, created_at
-             FROM appointments WHERE pet_id IN ($placeholders) ORDER BY scheduled_at DESC"
-        );
-        $stmt->execute($petIds);
 
-        return array_map($this->hydrate(...), $stmt->fetchAll());
+        return $this->fetchAll(
+            "SELECT id, pet_id, vet_id, scheduled_at, status, reason, created_at
+             FROM appointments WHERE pet_id IN ($placeholders) ORDER BY scheduled_at DESC",
+            $petIds,
+            $this->hydrate(...),
+        );
     }
 
     /**
@@ -73,19 +60,20 @@ final class AppointmentRepository
      */
     public function findAllByVetId(int $vetId): array
     {
-        $stmt = $this->pdo->prepare(
+        return $this->fetchAll(
             'SELECT id, pet_id, vet_id, scheduled_at, status, reason, created_at
-             FROM appointments WHERE vet_id = :vet_id ORDER BY scheduled_at'
+             FROM appointments WHERE vet_id = :vet_id ORDER BY scheduled_at',
+            ['vet_id' => $vetId],
+            $this->hydrate(...),
         );
-        $stmt->execute(['vet_id' => $vetId]);
-
-        return array_map($this->hydrate(...), $stmt->fetchAll());
     }
 
     public function updateStatus(int $id, AppointmentStatus $status): void
     {
-        $stmt = $this->pdo->prepare('UPDATE appointments SET status = :status WHERE id = :id');
-        $stmt->execute(['status' => $status->value, 'id' => $id]);
+        $this->execute(
+            'UPDATE appointments SET status = :status WHERE id = :id',
+            ['status' => $status->value, 'id' => $id],
+        );
     }
 
     /**

@@ -5,52 +5,39 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Domain\Vet;
-use App\Infrastructure\Database;
-use PDO;
 
-final class VetRepository
+final class VetRepository extends AbstractRepository
 {
-    private readonly PDO $pdo;
-
-    public function __construct()
-    {
-        $this->pdo = Database::connection();
-    }
-
     public function createProfile(int $userId, string $firstName, string $lastName, string $specialty): void
     {
-        $stmt = $this->pdo->prepare(
+        $this->execute(
             'INSERT INTO vets (user_id, first_name, last_name, specialty)
-             VALUES (:user_id, :first_name, :last_name, :specialty)'
+             VALUES (:user_id, :first_name, :last_name, :specialty)',
+            [
+                'user_id' => $userId,
+                'first_name' => $firstName,
+                'last_name' => $lastName,
+                'specialty' => $specialty,
+            ],
         );
-        $stmt->execute([
-            'user_id' => $userId,
-            'first_name' => $firstName,
-            'last_name' => $lastName,
-            'specialty' => $specialty,
-        ]);
     }
 
     public function findByUserId(int $userId): ?Vet
     {
-        $stmt = $this->pdo->prepare(
-            'SELECT id, user_id, first_name, last_name, specialty FROM vets WHERE user_id = :user_id'
+        return $this->fetchOne(
+            'SELECT id, user_id, first_name, last_name, specialty FROM vets WHERE user_id = :user_id',
+            ['user_id' => $userId],
+            $this->hydrate(...),
         );
-        $stmt->execute(['user_id' => $userId]);
-        $row = $stmt->fetch();
-
-        return $row === false ? null : $this->hydrate($row);
     }
 
     public function findById(int $id): ?Vet
     {
-        $stmt = $this->pdo->prepare(
-            'SELECT id, user_id, first_name, last_name, specialty FROM vets WHERE id = :id'
+        return $this->fetchOne(
+            'SELECT id, user_id, first_name, last_name, specialty FROM vets WHERE id = :id',
+            ['id' => $id],
+            $this->hydrate(...),
         );
-        $stmt->execute(['id' => $id]);
-        $row = $stmt->fetch();
-
-        return $row === false ? null : $this->hydrate($row);
     }
 
     /**
@@ -58,11 +45,11 @@ final class VetRepository
      */
     public function findAll(): array
     {
-        $stmt = $this->pdo->query(
-            'SELECT id, user_id, first_name, last_name, specialty FROM vets ORDER BY last_name, first_name'
+        return $this->fetchAll(
+            'SELECT id, user_id, first_name, last_name, specialty FROM vets ORDER BY last_name, first_name',
+            [],
+            $this->hydrate(...),
         );
-
-        return array_map($this->hydrate(...), $stmt->fetchAll());
     }
 
     /**
