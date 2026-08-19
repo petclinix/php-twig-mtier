@@ -9,7 +9,6 @@ use App\Domain\User;
 use App\Infrastructure\Database;
 use DateTimeImmutable;
 use PDO;
-use RuntimeException;
 
 final class UserRepository
 {
@@ -67,7 +66,7 @@ final class UserRepository
 
         $id = (int) $this->pdo->lastInsertId();
 
-        return $this->findById($id) ?? throw new RuntimeException('Failed to load user after insert.');
+        return $this->findById($id) ?? throw UserPersistenceException::failedToLoadAfterInsert();
     }
 
     public function setActive(int $id, bool $active): void

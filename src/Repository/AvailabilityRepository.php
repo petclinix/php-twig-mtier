@@ -8,7 +8,6 @@ use App\Domain\Availability;
 use App\Infrastructure\Database;
 use DateTimeImmutable;
 use PDO;
-use RuntimeException;
 
 final class AvailabilityRepository
 {
@@ -32,7 +31,7 @@ final class AvailabilityRepository
 
         $id = (int) $this->pdo->lastInsertId();
 
-        return $this->findById($id) ?? throw new RuntimeException('Failed to load availability after insert.');
+        return $this->findById($id) ?? throw AvailabilityPersistenceException::failedToLoadAfterInsert();
     }
 
     public function findById(int $id): ?Availability

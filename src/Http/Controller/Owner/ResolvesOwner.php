@@ -6,16 +6,16 @@ namespace App\Http\Controller\Owner;
 
 use App\Domain\Owner;
 use App\Http\Session;
+use App\Http\UnauthenticatedException;
 use App\Repository\OwnerRepository;
-use RuntimeException;
 
 trait ResolvesOwner
 {
     private function currentOwner(): Owner
     {
-        $userId = Session::userId() ?? throw new RuntimeException('No authenticated user.');
+        $userId = Session::userId() ?? throw new UnauthenticatedException();
 
         return (new OwnerRepository())->findByUserId($userId)
-            ?? throw new RuntimeException('Owner profile not found for current user.');
+            ?? throw new OwnerProfileNotFoundException();
     }
 }

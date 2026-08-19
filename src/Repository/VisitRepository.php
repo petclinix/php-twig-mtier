@@ -8,7 +8,6 @@ use App\Domain\Visit;
 use App\Infrastructure\Database;
 use DateTimeImmutable;
 use PDO;
-use RuntimeException;
 
 final class VisitRepository
 {
@@ -32,7 +31,7 @@ final class VisitRepository
 
         $id = (int) $this->pdo->lastInsertId();
 
-        return $this->findById($id) ?? throw new RuntimeException('Failed to load visit after insert.');
+        return $this->findById($id) ?? throw VisitPersistenceException::failedToLoadAfterInsert();
     }
 
     public function findById(int $id): ?Visit

@@ -8,7 +8,6 @@ use App\Domain\Pet;
 use App\Infrastructure\Database;
 use DateTimeImmutable;
 use PDO;
-use RuntimeException;
 
 final class PetRepository
 {
@@ -35,7 +34,7 @@ final class PetRepository
 
         $id = (int) $this->pdo->lastInsertId();
 
-        return $this->findById($id) ?? throw new RuntimeException('Failed to load pet after insert.');
+        return $this->findById($id) ?? throw PetPersistenceException::failedToLoadAfterInsert();
     }
 
     public function findById(int $id): ?Pet

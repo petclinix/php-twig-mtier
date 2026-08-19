@@ -9,7 +9,6 @@ use App\Domain\AppointmentStatus;
 use App\Infrastructure\Database;
 use DateTimeImmutable;
 use PDO;
-use RuntimeException;
 
 final class AppointmentRepository
 {
@@ -35,7 +34,7 @@ final class AppointmentRepository
 
         $id = (int) $this->pdo->lastInsertId();
 
-        return $this->findById($id) ?? throw new RuntimeException('Failed to load appointment after insert.');
+        return $this->findById($id) ?? throw AppointmentPersistenceException::failedToLoadAfterInsert();
     }
 
     public function findById(int $id): ?Appointment
