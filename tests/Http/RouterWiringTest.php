@@ -51,4 +51,14 @@ final class RouterWiringTest extends TestCase
         self::assertSame('/login', $response->headers['location'] ?? null);
         self::assertSame('', $response->body); // AuthMiddleware short-circuits; DashboardController never runs.
     }
+
+    public function testKnownRouteWithWrongMethodReturns405FromRouterMethodNotAllowedBranch(): void
+    {
+        //act
+        $response = self::$server->request('POST', '/'); // '/' is only registered as GET.
+
+        //assert
+        self::assertSame(405, $response->statusCode);
+        self::assertStringContainsString('Method not allowed.', $response->body);
+    }
 }
