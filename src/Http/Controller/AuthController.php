@@ -11,7 +11,7 @@ use App\Repository\OwnerRepository;
 use App\Repository\UserRepository;
 use App\Repository\VetRepository;
 use App\Service\AuthService;
-use App\Service\EmailAlreadyRegisteredException;
+use App\Service\Exception\EmailAlreadyRegisteredException;
 use Twig\Environment;
 
 final class AuthController

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Controller\Vet;
+namespace App\Http\Controller\Vet\Exception;
 
 use RuntimeException;
 

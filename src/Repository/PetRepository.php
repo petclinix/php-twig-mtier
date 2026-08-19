@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Domain\Pet;
+use App\Repository\Exception\PetPersistenceException;
 use DateTimeImmutable;
 
 final class PetRepository extends AbstractRepository

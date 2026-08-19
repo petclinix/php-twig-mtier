@@ -6,6 +6,7 @@ namespace App\Repository;
 
 use App\Domain\Role;
 use App\Domain\User;
+use App\Repository\Exception\UserPersistenceException;
 use DateTimeImmutable;
 
 final class UserRepository extends AbstractRepository

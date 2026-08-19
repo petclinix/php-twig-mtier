@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Domain\Availability;
+use App\Repository\Exception\AvailabilityPersistenceException;
 use DateTimeImmutable;
 
 final class AvailabilityRepository extends AbstractRepository

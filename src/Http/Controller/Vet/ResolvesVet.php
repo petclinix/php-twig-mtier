@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace App\Http\Controller\Vet;
 
 use App\Domain\Vet;
+use App\Http\Controller\Vet\Exception\VetProfileNotFoundException;
+use App\Http\Exception\UnauthenticatedException;
 use App\Http\Session;
-use App\Http\UnauthenticatedException;
 use App\Repository\VetRepository;
 
 trait ResolvesVet

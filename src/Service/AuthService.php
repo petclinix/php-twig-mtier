@@ -11,6 +11,7 @@ use App\Repository\ActivityLogRepository;
 use App\Repository\OwnerRepository;
 use App\Repository\UserRepository;
 use App\Repository\VetRepository;
+use App\Service\Exception\EmailAlreadyRegisteredException;
 use Throwable;
 
 final class AuthService

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Controller\Owner;
+namespace App\Http\Controller\Owner\Exception;
 
 use RuntimeException;
 

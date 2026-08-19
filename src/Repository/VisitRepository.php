@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Domain\Visit;
+use App\Repository\Exception\VisitPersistenceException;
 use DateTimeImmutable;
 
 final class VisitRepository extends AbstractRepository

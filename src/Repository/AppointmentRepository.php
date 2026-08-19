@@ -6,6 +6,7 @@ namespace App\Repository;
 
 use App\Domain\Appointment;
 use App\Domain\AppointmentStatus;
+use App\Repository\Exception\AppointmentPersistenceException;
 use DateTimeImmutable;
 
 final class AppointmentRepository extends AbstractRepository
