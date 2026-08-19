@@ -7,6 +7,14 @@ namespace App\Tests\Http;
 use App\Tests\Support\HttpServer;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * This is an integration test. It boots the real app behind a `php -S` server and
+ * assures that a request gets correctly routed to its corresponding controller,
+ * through Twig, end to end — proving the production wiring in public/index.php is
+ * correct. It intentionally covers only the happy path; Router's branches (404,
+ * 405, middleware short-circuit) are covered by the unit test in
+ * tests/Http/Router/RouterTest.php.
+ */
 final class RouterWiringTest extends TestCase
 {
     private static HttpServer $server;
@@ -29,36 +37,5 @@ final class RouterWiringTest extends TestCase
         //assert
         self::assertSame(200, $response->statusCode);
         self::assertStringContainsString('Skeleton is running.', $response->body);
-    }
-
-    public function testUnknownRouteReturns404FromRouterNotFoundBranch(): void
-    {
-        //act
-        $response = self::$server->request('GET', '/this-route-does-not-exist');
-
-        //assert
-        self::assertSame(404, $response->statusCode);
-        self::assertStringContainsString('Page not found.', $response->body);
-    }
-
-    public function testProtectedRouteWithoutSessionRedirectsToLoginBeforeControllerRuns(): void
-    {
-        //act
-        $response = self::$server->request('GET', '/dashboard');
-
-        //assert
-        self::assertSame(302, $response->statusCode);
-        self::assertSame('/login', $response->headers['location'] ?? null);
-        self::assertSame('', $response->body); // AuthMiddleware short-circuits; DashboardController never runs.
-    }
-
-    public function testKnownRouteWithWrongMethodReturns405FromRouterMethodNotAllowedBranch(): void
-    {
-        //act
-        $response = self::$server->request('POST', '/'); // '/' is only registered as GET.
-
-        //assert
-        self::assertSame(405, $response->statusCode);
-        self::assertStringContainsString('Method not allowed.', $response->body);
     }
 }
