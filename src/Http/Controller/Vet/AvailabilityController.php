@@ -18,10 +18,7 @@ final class AvailabilityController
     {
     }
 
-    /**
-     * @param array<string, string> $vars
-     */
-    public function index(array $vars): string
+    public function index(): string
     {
         $vet = $this->currentVet();
         $slots = (new AvailabilityRepository())->findAllByVetId($vet->id);
@@ -29,10 +26,7 @@ final class AvailabilityController
         return $this->twig->render('vet/availability/index.html.twig', ['slots' => $slots, 'errors' => [], 'old' => []]);
     }
 
-    /**
-     * @param array<string, string> $vars
-     */
-    public function store(array $vars): string
+    public function store(): string
     {
         $vet = $this->currentVet();
 

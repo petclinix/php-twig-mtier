@@ -14,10 +14,7 @@ final class DashboardController
     {
     }
 
-    /**
-     * @param array<string, string> $vars
-     */
-    public function index(array $vars): string
+    public function index(): string
     {
         $userId = Session::userId();
         $user = $userId !== null ? (new UserRepository())->findById($userId) : null;

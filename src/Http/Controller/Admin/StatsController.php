@@ -13,10 +13,7 @@ final class StatsController
     {
     }
 
-    /**
-     * @param array<string, string> $vars
-     */
-    public function index(array $vars): string
+    public function index(): string
     {
         $stats = (new StatsRepository())->summary();
 

@@ -18,10 +18,7 @@ final class AppointmentController
     {
     }
 
-    /**
-     * @param array<string, string> $vars
-     */
-    public function index(array $vars): string
+    public function index(): string
     {
         $vet = $this->currentVet();
         $appointments = (new AppointmentRepository())->findAllByVetId($vet->id);

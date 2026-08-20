@@ -18,10 +18,7 @@ final class PetController
     {
     }
 
-    /**
-     * @param array<string, string> $vars
-     */
-    public function index(array $vars): string
+    public function index(): string
     {
         $owner = $this->currentOwner();
         $pets = (new PetRepository())->findAllByOwnerId($owner->id);
@@ -29,10 +26,7 @@ final class PetController
         return $this->twig->render('owner/pets/index.html.twig', ['pets' => $pets, 'errors' => [], 'old' => []]);
     }
 
-    /**
-     * @param array<string, string> $vars
-     */
-    public function store(array $vars): string
+    public function store(): string
     {
         $owner = $this->currentOwner();
 

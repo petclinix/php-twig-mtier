@@ -16,10 +16,7 @@ final class UserController
     {
     }
 
-    /**
-     * @param array<string, string> $vars
-     */
-    public function index(array $vars): string
+    public function index(): string
     {
         $users = (new UserRepository())->findAll();
 

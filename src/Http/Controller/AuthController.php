@@ -30,18 +30,12 @@ final class AuthController
         );
     }
 
-    /**
-     * @param array<string, string> $vars
-     */
-    public function showRegister(array $vars): string
+    public function showRegister(): string
     {
         return $this->twig->render('auth/register.html.twig', ['errors' => [], 'old' => []]);
     }
 
-    /**
-     * @param array<string, string> $vars
-     */
-    public function register(array $vars): string
+    public function register(): string
     {
         $errors = new ErrorBag();
 
@@ -88,18 +82,12 @@ final class AuthController
         return $this->twig->render('auth/register.html.twig', ['errors' => $errors->all(), 'old' => $_POST]);
     }
 
-    /**
-     * @param array<string, string> $vars
-     */
-    public function showLogin(array $vars): string
+    public function showLogin(): string
     {
         return $this->twig->render('auth/login.html.twig', ['error' => null, 'old' => []]);
     }
 
-    /**
-     * @param array<string, string> $vars
-     */
-    public function login(array $vars): string
+    public function login(): string
     {
         $email = trim((string) ($_POST['email'] ?? ''));
         $password = (string) ($_POST['password'] ?? '');
@@ -128,10 +116,7 @@ final class AuthController
         return '';
     }
 
-    /**
-     * @param array<string, string> $vars
-     */
-    public function logout(array $vars): string
+    public function logout(): string
     {
         Session::logout();
 

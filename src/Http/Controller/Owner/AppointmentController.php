@@ -23,18 +23,12 @@ final class AppointmentController
     {
     }
 
-    /**
-     * @param array<string, string> $vars
-     */
-    public function index(array $vars): string
+    public function index(): string
     {
         return $this->render([]);
     }
 
-    /**
-     * @param array<string, string> $vars
-     */
-    public function store(array $vars): string
+    public function store(): string
     {
         $owner = $this->currentOwner();
         $petsById = $this->indexById((new PetRepository())->findAllByOwnerId($owner->id));

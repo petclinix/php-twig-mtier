@@ -14,10 +14,7 @@ final class ActivityController
     {
     }
 
-    /**
-     * @param array<string, string> $vars
-     */
-    public function index(array $vars): string
+    public function index(): string
     {
         $entries = (new ActivityLogRepository())->findRecent(100);
 

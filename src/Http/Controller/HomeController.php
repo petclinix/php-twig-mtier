@@ -12,10 +12,7 @@ final class HomeController
     {
     }
 
-    /**
-     * @param array<string, string> $vars
-     */
-    public function index(array $vars): string
+    public function index(): string
     {
         return $this->twig->render('home.html.twig');
     }
