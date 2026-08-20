@@ -154,4 +154,31 @@ final class AuthenticatedRoutingTest extends TestCase
         self::assertSame('/dashboard', $response->headers['location'] ?? null);
         self::assertSame('', $response->body); // AdminMiddleware short-circuits; StatsController never runs.
     }
+
+    public function testVetCanReachVetAvailabilityRoute(): void
+    {
+        //arrange
+        $cookie = $this->loginAs($this->vetEmail);
+
+        //act
+        $response = self::$server->request('GET', '/vet/availability', ['Cookie' => $cookie]);
+
+        //assert
+        self::assertSame(200, $response->statusCode);
+        self::assertStringContainsString('My Availability', $response->body);
+    }
+
+    public function testNonVetIsRedirectedAwayFromVetRoute(): void
+    {
+        //arrange
+        $cookie = $this->loginAs($this->ownerEmail);
+
+        //act
+        $response = self::$server->request('GET', '/vet/availability', ['Cookie' => $cookie]);
+
+        //assert
+        self::assertSame(302, $response->statusCode);
+        self::assertSame('/dashboard', $response->headers['location'] ?? null);
+        self::assertSame('', $response->body); // VetMiddleware short-circuits; VetAvailabilityController never runs.
+    }
 }
