@@ -9,14 +9,14 @@ use App\Http\Session;
 
 final class VetMiddleware implements Middleware
 {
-    public function handle(): bool
+    public function handle(): MiddlewareResult
     {
         if (Session::role() === Role::Vet->value) {
-            return true;
+            return MiddlewareResult::pass();
         }
 
         header('Location: /dashboard');
 
-        return false;
+        return MiddlewareResult::stop(302);
     }
 }

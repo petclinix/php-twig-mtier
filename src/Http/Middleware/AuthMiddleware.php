@@ -8,14 +8,14 @@ use App\Http\Session;
 
 final class AuthMiddleware implements Middleware
 {
-    public function handle(): bool
+    public function handle(): MiddlewareResult
     {
         if (Session::isAuthenticated()) {
-            return true;
+            return MiddlewareResult::pass();
         }
 
         header('Location: /login');
 
-        return false;
+        return MiddlewareResult::stop(302);
     }
 }

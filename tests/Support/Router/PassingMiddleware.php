@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace App\Tests\Support\Router;
 
 use App\Http\Middleware\Middleware;
+use App\Http\Middleware\MiddlewareResult;
 
 final class PassingMiddleware implements Middleware
 {
-    public function handle(): bool
+    public function handle(): MiddlewareResult
     {
         MiddlewareCallLog::$calls[] = self::class;
 
-        return true;
+        return MiddlewareResult::pass();
     }
 }

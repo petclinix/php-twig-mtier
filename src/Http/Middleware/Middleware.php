@@ -7,8 +7,9 @@ namespace App\Http\Middleware;
 interface Middleware
 {
     /**
-     * Returns true to let the request continue to the controller.
-     * Returns false if it has already short-circuited the response (e.g. a redirect).
+     * Returns MiddlewareResult::pass() to let the request continue to the
+     * controller, or MiddlewareResult::stop($statusCode) if it has already
+     * short-circuited the response (e.g. a redirect) with that status code.
      */
-    public function handle(): bool;
+    public function handle(): MiddlewareResult;
 }

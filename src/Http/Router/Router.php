@@ -46,9 +46,21 @@ final class Router
         $routeInfo = $dispatcher->dispatch($method, rawurldecode($path));
 
         switch ($routeInfo[0]) {
-            case Dispatcher::NOT_FOUND:
-                http_response_code(404);
-                echo $twig->render('error/404.html.twig');
+            case Dispatcher::FOUND:
+                [$routeData, $vars] = [$routeInfo[1], $routeInfo[2]];
+                [[$class, $action], $middleware] = $routeData;
+
+                foreach ($middleware as $middlewareClass) {
+                    $result = (new $middlewareClass())->handle();
+                    if (!$result->continue) {
+                        http_response_code($result->statusCode ?? 500);
+
+                        return;
+                    }
+                }
+
+                $controller = new $class($twig);
+                echo $controller->$action($vars);
                 break;
 
             case Dispatcher::METHOD_NOT_ALLOWED:
@@ -56,18 +68,10 @@ final class Router
                 echo $twig->render('error/405.html.twig');
                 break;
 
-            case Dispatcher::FOUND:
-                [$routeData, $vars] = [$routeInfo[1], $routeInfo[2]];
-                [[$class, $action], $middleware] = $routeData;
-
-                foreach ($middleware as $middlewareClass) {
-                    if (!(new $middlewareClass())->handle()) {
-                        return;
-                    }
-                }
-
-                $controller = new $class($twig);
-                echo $controller->$action($vars);
+            case Dispatcher::NOT_FOUND:
+            default:
+                http_response_code(404);
+                echo $twig->render('error/404.html.twig');
                 break;
         }
     }
