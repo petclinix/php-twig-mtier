@@ -34,38 +34,54 @@
             </ul>
         {% endif %}
 
-        <form method="post" action="/owner/appointments">
-            <label>
-                Pet
-                <select name="pet_id" required>
-                    <option value="">Select a pet</option>
-                    {% for pet in pets %}
-                        <option value="{{ pet.id }}" {% if old.pet_id|default('') == pet.id %}selected{% endif %}>{{ pet.name }}</option>
-                    {% endfor %}
-                </select>
-            </label>
-
+        <form method="get" action="/owner/appointments">
             <label>
                 Vet
                 <select name="vet_id" required>
                     <option value="">Select a vet</option>
                     {% for vet in vets %}
-                        <option value="{{ vet.id }}" {% if old.vet_id|default('') == vet.id %}selected{% endif %}>Dr. {{ vet.firstName }} {{ vet.lastName }} ({{ vet.specialty }})</option>
+                        <option value="{{ vet.id }}" {% if selectedVetId == vet.id %}selected{% endif %}>Dr. {{ vet.firstName }} {{ vet.lastName }} ({{ vet.specialty }})</option>
                     {% endfor %}
                 </select>
             </label>
-
-            <label>
-                Date and time
-                <input type="datetime-local" name="scheduled_at" value="{{ old.scheduled_at|default('') }}" required>
-            </label>
-
-            <label>
-                Reason
-                <input type="text" name="reason" value="{{ old.reason|default('') }}">
-            </label>
-
-            <button type="submit">Book Appointment</button>
+            <button type="submit">Show available times</button>
         </form>
+
+        {% if selectedVetId %}
+            {% if slotOptions is empty %}
+                <p>Dr. {{ vetsById[selectedVetId].lastName }} has no open times right now. Try another vet.</p>
+            {% else %}
+                <form method="post" action="/owner/appointments">
+                    <input type="hidden" name="vet_id" value="{{ selectedVetId }}">
+
+                    <label>
+                        Pet
+                        <select name="pet_id" required>
+                            <option value="">Select a pet</option>
+                            {% for pet in pets %}
+                                <option value="{{ pet.id }}" {% if old.pet_id|default('') == pet.id %}selected{% endif %}>{{ pet.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+
+                    <label>
+                        Date and time
+                        <select name="scheduled_at" required>
+                            <option value="">Select a time</option>
+                            {% for slot in slotOptions %}
+                                <option value="{{ slot.value }}" {% if old.scheduled_at|default('') == slot.value %}selected{% endif %}>{{ slot.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+
+                    <label>
+                        Reason
+                        <input type="text" name="reason" value="{{ old.reason|default('') }}">
+                    </label>
+
+                    <button type="submit">Book Appointment</button>
+                </form>
+            {% endif %}
+        {% endif %}
     {% endif %}
 {% endblock %}

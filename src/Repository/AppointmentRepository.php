@@ -69,6 +69,19 @@ final class AppointmentRepository extends AbstractRepository
         );
     }
 
+    /**
+     * @return list<Appointment>
+     */
+    public function findActiveByVetId(int $vetId): array
+    {
+        return $this->fetchAll(
+            "SELECT id, pet_id, vet_id, scheduled_at, status, reason, created_at
+             FROM appointments WHERE vet_id = :vet_id AND status IN ('requested', 'confirmed') ORDER BY scheduled_at",
+            ['vet_id' => $vetId],
+            $this->hydrate(...),
+        );
+    }
+
     public function updateStatus(int $id, AppointmentStatus $status): void
     {
         $this->execute(
