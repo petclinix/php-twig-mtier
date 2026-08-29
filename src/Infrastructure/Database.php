@@ -13,26 +13,32 @@ final class Database
 
     public static function connection(): PDO
     {
-        if (self::$connection === null) {
-            $host = getenv('DB_HOST') ?: 'db';
-            $port = getenv('DB_PORT') ?: '3306';
-            $name = getenv('DB_NAME') ?: 'petclinix';
-            $user = getenv('DB_USER') ?: 'petclinix';
-            $pass = getenv('DB_PASSWORD') ?: 'petclinix';
+        return self::$connection ??= self::newConnection();
+    }
 
-            self::$connection = new PDO(
-                "mysql:host={$host};port={$port};dbname={$name};charset=utf8mb4",
-                $user,
-                $pass,
-                [
-                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                    PDO::ATTR_EMULATE_PREPARES => false,
-                ]
-            );
-        }
+    /**
+     * Builds a fresh, independent connection rather than reusing the memoized
+     * singleton — needed when code genuinely requires two separate DB sessions
+     * (e.g. proving InnoDB serializes concurrent writers in a test).
+     */
+    public static function newConnection(): PDO
+    {
+        $host = getenv('DB_HOST') ?: 'db';
+        $port = getenv('DB_PORT') ?: '3306';
+        $name = getenv('DB_NAME') ?: 'petclinix';
+        $user = getenv('DB_USER') ?: 'petclinix';
+        $pass = getenv('DB_PASSWORD') ?: 'petclinix';
 
-        return self::$connection;
+        return new PDO(
+            "mysql:host={$host};port={$port};dbname={$name};charset=utf8mb4",
+            $user,
+            $pass,
+            [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES => false,
+            ]
+        );
     }
 
     /**

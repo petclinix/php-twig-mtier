@@ -7,22 +7,34 @@ namespace App\Repository;
 use App\Domain\Appointment;
 use App\Domain\AppointmentStatus;
 use App\Repository\Exception\AppointmentPersistenceException;
+use App\Repository\Exception\AppointmentSlotUnavailableException;
 use DateTimeImmutable;
+use PDOException;
 
 final class AppointmentRepository extends AbstractRepository
 {
+    private const MYSQL_ERROR_DUPLICATE_ENTRY = 1062;
+
     public function create(int $petId, int $vetId, DateTimeImmutable $scheduledAt, ?string $reason): Appointment
     {
-        $this->execute(
-            'INSERT INTO appointments (pet_id, vet_id, scheduled_at, reason)
-             VALUES (:pet_id, :vet_id, :scheduled_at, :reason)',
-            [
-                'pet_id' => $petId,
-                'vet_id' => $vetId,
-                'scheduled_at' => $scheduledAt->format('Y-m-d H:i:s'),
-                'reason' => $reason,
-            ],
-        );
+        try {
+            $this->execute(
+                'INSERT INTO appointments (pet_id, vet_id, scheduled_at, reason)
+                 VALUES (:pet_id, :vet_id, :scheduled_at, :reason)',
+                [
+                    'pet_id' => $petId,
+                    'vet_id' => $vetId,
+                    'scheduled_at' => $scheduledAt->format('Y-m-d H:i:s'),
+                    'reason' => $reason,
+                ],
+            );
+        } catch (PDOException $e) {
+            if ((int) ($e->errorInfo[1] ?? 0) === self::MYSQL_ERROR_DUPLICATE_ENTRY) {
+                throw AppointmentSlotUnavailableException::alreadyBooked();
+            }
+
+            throw $e;
+        }
 
         return $this->findById($this->lastInsertId()) ?? throw AppointmentPersistenceException::failedToLoadAfterInsert();
     }

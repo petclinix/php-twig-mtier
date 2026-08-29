@@ -8,6 +8,7 @@ use App\Http\Validation\ErrorBag;
 use App\Http\Validation\Input;
 use App\Http\Validation\Validate;
 use App\Repository\AppointmentRepository;
+use App\Repository\Exception\AppointmentSlotUnavailableException;
 use App\Repository\PetRepository;
 use App\Repository\VetRepository;
 use App\Service\OwnerAppointmentBoardService;
@@ -67,11 +68,15 @@ final class AppointmentController
         $reason = Input::string('reason');
 
         if ($errors->isEmpty() && $scheduledAt !== null) {
-            (new AppointmentRepository())->create($petId, $vetId, $scheduledAt, $reason !== '' ? $reason : null);
+            try {
+                (new AppointmentRepository())->create($petId, $vetId, $scheduledAt, $reason !== '' ? $reason : null);
 
-            header('Location: /owner/appointments');
+                header('Location: /owner/appointments');
 
-            return '';
+                return '';
+            } catch (AppointmentSlotUnavailableException) {
+                $errors->add('That time is no longer available. Please choose another.');
+            }
         }
 
         return $this->render($errors->all(), $_POST, $vetId);

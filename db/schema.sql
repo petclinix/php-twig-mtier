@@ -55,8 +55,15 @@ CREATE TABLE appointments (
     status ENUM('requested', 'confirmed', 'cancelled', 'completed') NOT NULL DEFAULT 'requested',
     reason VARCHAR(255) NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    -- NULL for cancelled/completed rows so they never collide in the unique key
+    -- below; only one active (requested/confirmed) appointment may occupy a given
+    -- vet+slot at a time, but a slot is freed again once an appointment leaves the
+    -- active set (e.g. cancelled), self-maintained on every status UPDATE.
+    active_scheduled_at DATETIME
+        GENERATED ALWAYS AS (CASE WHEN status IN ('requested', 'confirmed') THEN scheduled_at ELSE NULL END) STORED,
     CONSTRAINT fk_appointments_pet FOREIGN KEY (pet_id) REFERENCES pets (id) ON DELETE CASCADE,
-    CONSTRAINT fk_appointments_vet FOREIGN KEY (vet_id) REFERENCES vets (id) ON DELETE CASCADE
+    CONSTRAINT fk_appointments_vet FOREIGN KEY (vet_id) REFERENCES vets (id) ON DELETE CASCADE,
+    UNIQUE KEY uq_appointments_active_vet_slot (vet_id, active_scheduled_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE visits (
