@@ -8,6 +8,7 @@ use App\Domain\AppointmentStatus;
 use App\Repository\AppointmentRepository;
 use App\Repository\OwnerRepository;
 use App\Repository\PetRepository;
+use App\Service\VetAppointmentBoardService;
 use Twig\Environment;
 
 final class AppointmentController
@@ -21,38 +22,13 @@ final class AppointmentController
     public function index(): string
     {
         $vet = $this->currentVet();
-        $appointments = (new AppointmentRepository())->findAllByVetId($vet->id);
+        $board = (new VetAppointmentBoardService(
+            new AppointmentRepository(),
+            new PetRepository(),
+            new OwnerRepository(),
+        ))->forVet($vet->id);
 
-        $petRepository = new PetRepository();
-        $ownerRepository = new OwnerRepository();
-
-        $petsById = [];
-        $ownersById = [];
-        foreach ($appointments as $appointment) {
-            if (isset($petsById[$appointment->petId])) {
-                continue;
-            }
-
-            $pet = $petRepository->findById($appointment->petId);
-            if ($pet === null) {
-                continue;
-            }
-
-            $petsById[$pet->id] = $pet;
-
-            if (!isset($ownersById[$pet->ownerId])) {
-                $owner = $ownerRepository->findById($pet->ownerId);
-                if ($owner !== null) {
-                    $ownersById[$owner->id] = $owner;
-                }
-            }
-        }
-
-        return $this->twig->render('vet/appointments/index.html.twig', [
-            'appointments' => $appointments,
-            'petsById' => $petsById,
-            'ownersById' => $ownersById,
-        ]);
+        return $this->twig->render('vet/appointments/index.html.twig', $board);
     }
 
     /**
