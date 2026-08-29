@@ -7,9 +7,11 @@ namespace App\Tests\Owner;
 use App\Domain\Owner;
 use App\Http\Controller\Owner\PetController;
 use App\Infrastructure\Database;
+use App\Repository\AppointmentRepository;
 use App\Repository\PetRepository;
 use App\Tests\Support\CreatesTestUsers;
 use App\Tests\Support\HeaderSpy;
+use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
@@ -26,6 +28,7 @@ final class PetControllerTest extends TestCase
     {
         HeaderSpy::reset();
         $_POST = [];
+        $_FILES = [];
         $this->ownerEmail = sprintf('pet-ctrl-%s@example.test', bin2hex(random_bytes(6)));
         $this->owner = $this->registerOwner($this->ownerEmail);
         $this->loginAs($this->owner->userId, 'owner');
@@ -36,6 +39,7 @@ final class PetControllerTest extends TestCase
     {
         Database::connection()->prepare('DELETE FROM users WHERE email = :email')->execute(['email' => $this->ownerEmail]);
         $_POST = [];
+        $_FILES = [];
     }
 
     public function testIndexListsOwnersPets(): void
@@ -49,6 +53,18 @@ final class PetControllerTest extends TestCase
         //assert
         self::assertStringContainsString('My Pets', $output);
         self::assertStringContainsString('Rex', $output);
+    }
+
+    public function testIndexShowsPhotoThumbnailWhenPresent(): void
+    {
+        //arrange
+        (new PetRepository())->create($this->owner->id, 'Rex', 'Dog', null, null, '/uploads/pets/example.png');
+
+        //act
+        $output = $this->controller->index([]);
+
+        //assert
+        self::assertStringContainsString('<img src="/uploads/pets/example.png"', $output);
     }
 
     public function testStoreWithValidDataCreatesPetAndRedirects(): void
@@ -65,6 +81,7 @@ final class PetControllerTest extends TestCase
         $pets = (new PetRepository())->findAllByOwnerId($this->owner->id);
         self::assertCount(1, $pets);
         self::assertSame('Milo', $pets[0]->name);
+        self::assertNull($pets[0]->photoUrl);
     }
 
     public function testStoreWithoutNameShowsValidationErrorAndDoesNotCreatePet(): void
@@ -92,5 +109,68 @@ final class PetControllerTest extends TestCase
         //assert
         self::assertStringContainsString('Birth date must be a valid date.', $output);
         self::assertSame([], HeaderSpy::$headers);
+    }
+
+    public function testStoreWithOversizedPhotoShowsValidationErrorAndDoesNotCreatePet(): void
+    {
+        //arrange
+        $_POST = ['name' => 'Milo', 'species' => 'Cat', 'breed' => '', 'birth_date' => ''];
+        $_FILES['photo'] = ['error' => UPLOAD_ERR_OK, 'size' => 6 * 1024 * 1024, 'tmp_name' => '/nonexistent'];
+
+        //act
+        $output = $this->controller->store([]);
+
+        //assert
+        self::assertStringContainsString('Photo must be smaller than 5 MB.', $output);
+        self::assertSame([], HeaderSpy::$headers);
+        self::assertCount(0, (new PetRepository())->findAllByOwnerId($this->owner->id));
+    }
+
+    public function testProfileShowsPetDetailsAndVisitHistory(): void
+    {
+        //arrange
+        $pet = (new PetRepository())->create($this->owner->id, 'Rex', 'Dog', 'Labrador', null);
+        $vetEmail = 'pet-ctrl-vet-' . bin2hex(random_bytes(6)) . '@example.test';
+        $vet = $this->registerVet($vetEmail);
+        $appointment = (new AppointmentRepository())->create($pet->id, $vet->id, new DateTimeImmutable('-1 week'), 'Checkup');
+        Database::connection()
+            ->prepare('INSERT INTO visits (appointment_id, diagnosis, vaccination, notes) VALUES (:appointment_id, :diagnosis, :vaccination, :notes)')
+            ->execute([
+                'appointment_id' => $appointment->id,
+                'diagnosis' => 'Healthy',
+                'vaccination' => 'Rabies booster',
+                'notes' => 'No concerns.',
+            ]);
+
+        try {
+            //act
+            $output = $this->controller->profile(['id' => (string) $pet->id]);
+
+            //assert
+            self::assertStringContainsString('Rex', $output);
+            self::assertStringContainsString('Healthy', $output);
+            self::assertStringContainsString('Rabies booster', $output);
+        } finally {
+            Database::connection()->prepare('DELETE FROM users WHERE email = :email')->execute(['email' => $vetEmail]);
+        }
+    }
+
+    public function testProfileRedirectsForAnotherOwnersPet(): void
+    {
+        //arrange
+        $otherOwnerEmail = 'pet-ctrl-other-' . bin2hex(random_bytes(6)) . '@example.test';
+        $otherOwner = $this->registerOwner($otherOwnerEmail);
+        $pet = (new PetRepository())->create($otherOwner->id, 'Fido', 'Dog', null, null);
+
+        try {
+            //act
+            $output = $this->controller->profile(['id' => (string) $pet->id]);
+
+            //assert
+            self::assertSame('', $output);
+            self::assertSame('/owner/pets', HeaderSpy::location());
+        } finally {
+            Database::connection()->prepare('DELETE FROM users WHERE email = :email')->execute(['email' => $otherOwnerEmail]);
+        }
     }
 }

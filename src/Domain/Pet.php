@@ -15,6 +15,7 @@ final readonly class Pet
         public string $species,
         public ?string $breed,
         public ?DateTimeImmutable $birthDate,
+        public ?string $photoUrl,
     ) {
     }
 }

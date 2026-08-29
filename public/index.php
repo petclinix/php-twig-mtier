@@ -45,6 +45,7 @@ $router->get('/dashboard', [DashboardController::class, 'index'], [AuthMiddlewar
 $ownerMiddleware = [AuthMiddleware::class, OwnerMiddleware::class];
 $router->get('/owner/pets', [PetController::class, 'index'], $ownerMiddleware);
 $router->post('/owner/pets', [PetController::class, 'store'], $ownerMiddleware);
+$router->get('/owner/pets/{id:\d+}', [PetController::class, 'profile'], $ownerMiddleware);
 $router->get('/owner/appointments', [AppointmentController::class, 'index'], $ownerMiddleware);
 $router->post('/owner/appointments', [AppointmentController::class, 'store'], $ownerMiddleware);
 $router->post('/owner/appointments/{id:\d+}/cancel', [AppointmentController::class, 'cancel'], $ownerMiddleware);

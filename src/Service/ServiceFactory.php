@@ -83,4 +83,9 @@ final class ServiceFactory
     {
         return new VisitService(new AppointmentRepository(), new VisitRepository());
     }
+
+    public function petPhotoUploadService(): PetPhotoUploadService
+    {
+        return new PetPhotoUploadService();
+    }
 }

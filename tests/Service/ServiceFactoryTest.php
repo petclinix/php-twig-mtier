@@ -11,6 +11,7 @@ use App\Service\AppointmentTransitionService;
 use App\Service\AuthService;
 use App\Service\OwnerAppointmentBoardService;
 use App\Service\OwnerVisitBoardService;
+use App\Service\PetPhotoUploadService;
 use App\Service\ServiceFactory;
 use App\Service\VetAppointmentBoardService;
 use App\Service\VisitService;
@@ -68,5 +69,10 @@ final class ServiceFactoryTest extends TestCase
     public function testVisitService(): void
     {
         self::assertInstanceOf(VisitService::class, $this->factory->visitService());
+    }
+
+    public function testPetPhotoUploadService(): void
+    {
+        self::assertInstanceOf(PetPhotoUploadService::class, $this->factory->petPhotoUploadService());
     }
 }

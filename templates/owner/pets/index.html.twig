@@ -11,7 +11,10 @@
         <ul>
             {% for pet in pets %}
                 <li>
-                    {{ pet.name }} — {{ pet.species }}
+                    {% if pet.photoUrl %}
+                        <img src="{{ pet.photoUrl }}" alt="{{ pet.name }}" width="60" height="60">
+                    {% endif %}
+                    <a href="/owner/pets/{{ pet.id }}">{{ pet.name }}</a> — {{ pet.species }}
                     {%- if pet.breed %} ({{ pet.breed }}){% endif -%}
                     {%- if pet.birthDate %}, born {{ pet.birthDate|date('Y-m-d') }}{% endif %}
                 </li>
@@ -29,7 +32,7 @@
         </ul>
     {% endif %}
 
-    <form method="post" action="/owner/pets">
+    <form method="post" action="/owner/pets" enctype="multipart/form-data">
         <label>
             Name
             <input type="text" name="name" value="{{ old.name|default('') }}" required>
@@ -48,6 +51,11 @@
         <label>
             Birth date
             <input type="date" name="birth_date" value="{{ old.birth_date|default('') }}">
+        </label>
+
+        <label>
+            Photo
+            <input type="file" name="photo" accept="image/*">
         </label>
 
         <button type="submit">Add Pet</button>

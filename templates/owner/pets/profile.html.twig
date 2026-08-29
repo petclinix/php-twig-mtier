@@ -1,0 +1,36 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ pet.name }} — PetcliniX{% endblock %}
+
+{% block content %}
+    <p><a href="/owner/pets">← Back to My Pets</a></p>
+
+    <h2>{{ pet.name }}</h2>
+
+    {% if pet.photoUrl %}
+        <img src="{{ pet.photoUrl }}" alt="{{ pet.name }}" width="200">
+    {% endif %}
+
+    <p>
+        {{ pet.species }}
+        {%- if pet.breed %} ({{ pet.breed }}){% endif -%}
+        {%- if pet.birthDate %}, born {{ pet.birthDate|date('Y-m-d') }}{% endif %}
+    </p>
+
+    <h3>Diagnosis &amp; Vaccination History</h3>
+
+    {% if visits is empty %}
+        <p>No recorded visits yet.</p>
+    {% else %}
+        <ul>
+            {% for visit in visits %}
+                <li>
+                    {{ visit.recordedAt|date('Y-m-d H:i') }}
+                    {%- if visit.diagnosis %}: {{ visit.diagnosis }}{% endif %}
+                    {%- if visit.vaccination %} — Vaccination: {{ visit.vaccination }}{% endif %}
+                    {%- if visit.notes %} ({{ visit.notes }}){% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endblock %}

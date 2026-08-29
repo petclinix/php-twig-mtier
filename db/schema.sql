@@ -36,6 +36,7 @@ CREATE TABLE pets (
     species VARCHAR(50) NOT NULL,
     breed VARCHAR(100) NULL,
     birth_date DATE NULL,
+    photo_url VARCHAR(255) NULL,
     CONSTRAINT fk_pets_owner FOREIGN KEY (owner_id) REFERENCES owners (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
