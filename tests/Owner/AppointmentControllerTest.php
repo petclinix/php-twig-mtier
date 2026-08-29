@@ -317,4 +317,144 @@ final class AppointmentControllerTest extends TestCase
         self::assertStringContainsString('That time is no longer available. Please choose another.', $output);
         self::assertSame([], HeaderSpy::$headers);
     }
+
+    public function testCancelCancelsOwnedAppointment(): void
+    {
+        //arrange
+        $appointment = (new AppointmentRepository())->create($this->petId, $this->vet->id, $this->appointmentSlot, 'Checkup');
+
+        //act
+        $output = $this->controller->cancel(['id' => (string) $appointment->id]);
+
+        //assert
+        self::assertSame('', $output);
+        self::assertSame('/owner/appointments', HeaderSpy::location());
+        $updated = (new AppointmentRepository())->findById($appointment->id);
+        self::assertSame(AppointmentStatus::Cancelled, $updated->status);
+    }
+
+    public function testEditRescheduleRendersFormWithOpenSlots(): void
+    {
+        //arrange
+        $appointment = (new AppointmentRepository())->create($this->petId, $this->vet->id, $this->appointmentSlot, 'Checkup');
+
+        //act
+        $output = $this->controller->editReschedule(['id' => (string) $appointment->id]);
+
+        //assert
+        self::assertStringContainsString('Reschedule Appointment', $output);
+        self::assertStringContainsString('name="scheduled_at"', $output);
+    }
+
+    public function testRescheduleSucceedsAndRedirects(): void
+    {
+        //arrange
+        $appointment = (new AppointmentRepository())->create($this->petId, $this->vet->id, $this->appointmentSlot, 'Checkup');
+        $newSlot = $this->appointmentSlot->modify('+1 hour');
+        $_POST = [
+            'duration_minutes' => '30',
+            'scheduled_at' => $newSlot->format('Y-m-d\TH:i'),
+            'reason' => 'Follow-up',
+        ];
+
+        //act
+        $output = $this->controller->reschedule(['id' => (string) $appointment->id]);
+
+        //assert
+        self::assertSame('', $output);
+        self::assertSame('/owner/appointments', HeaderSpy::location());
+        $old = (new AppointmentRepository())->findById($appointment->id);
+        self::assertSame(AppointmentStatus::Cancelled, $old->status);
+        $appointments = (new AppointmentRepository())->findAllByPetIds([$this->petId]);
+        self::assertCount(2, $appointments);
+    }
+
+    public function testRescheduleShowsErrorAndLeavesOriginalUntouchedWhenOverlapping(): void
+    {
+        //arrange
+        $appointment = (new AppointmentRepository())->create($this->petId, $this->vet->id, $this->appointmentSlot, 'Checkup');
+        $conflictingSlot = $this->appointmentSlot->modify('+1 hour');
+        (new AppointmentRepository())->create($this->petId, $this->vet->id, $conflictingSlot, 'Vaccination', 60);
+
+        $_POST = [
+            'duration_minutes' => '30',
+            'scheduled_at' => $conflictingSlot->format('Y-m-d\TH:i'),
+            'reason' => '',
+        ];
+
+        //act
+        $output = $this->controller->reschedule(['id' => (string) $appointment->id]);
+
+        //assert
+        self::assertStringContainsString('That time is no longer available. Please choose another.', $output);
+        $unchanged = (new AppointmentRepository())->findById($appointment->id);
+        self::assertSame(AppointmentStatus::Requested, $unchanged->status);
+    }
+
+    public function testCancelIsNoOpForAnotherOwnersAppointment(): void
+    {
+        //arrange
+        $otherOwnerEmail = 'appt-other-owner-' . bin2hex(random_bytes(6)) . '@example.test';
+        $otherOwner = $this->registerOwner($otherOwnerEmail);
+        $otherPetId = (new PetRepository())->create($otherOwner->id, 'Fido', 'Dog', null, null)->id;
+        $appointment = (new AppointmentRepository())->create($otherPetId, $this->vet->id, $this->appointmentSlot, 'Checkup');
+        $this->loginAs($this->owner->userId, 'owner');
+
+        try {
+            //act
+            $output = $this->controller->cancel(['id' => (string) $appointment->id]);
+
+            //assert
+            self::assertSame('', $output);
+            self::assertSame('/owner/appointments', HeaderSpy::location());
+            $unchanged = (new AppointmentRepository())->findById($appointment->id);
+            self::assertSame(AppointmentStatus::Requested, $unchanged->status);
+        } finally {
+            Database::connection()
+                ->prepare('DELETE FROM users WHERE email = :email')
+                ->execute(['email' => $otherOwnerEmail]);
+        }
+    }
+
+    public function testEditRescheduleRedirectsForAnotherOwnersAppointment(): void
+    {
+        //arrange
+        $otherOwnerEmail = 'appt-other-owner-' . bin2hex(random_bytes(6)) . '@example.test';
+        $otherOwner = $this->registerOwner($otherOwnerEmail);
+        $otherPetId = (new PetRepository())->create($otherOwner->id, 'Fido', 'Dog', null, null)->id;
+        $appointment = (new AppointmentRepository())->create($otherPetId, $this->vet->id, $this->appointmentSlot, 'Checkup');
+        $this->loginAs($this->owner->userId, 'owner');
+
+        try {
+            //act
+            $output = $this->controller->editReschedule(['id' => (string) $appointment->id]);
+
+            //assert
+            self::assertSame('', $output);
+            self::assertSame('/owner/appointments', HeaderSpy::location());
+        } finally {
+            Database::connection()
+                ->prepare('DELETE FROM users WHERE email = :email')
+                ->execute(['email' => $otherOwnerEmail]);
+        }
+    }
+
+    public function testRescheduleShowsErrorPastCutoff(): void
+    {
+        //arrange
+        $appointment = (new AppointmentRepository())->create($this->petId, $this->vet->id, new DateTimeImmutable('+1 hour'), 'Checkup');
+        $_POST = [
+            'duration_minutes' => '30',
+            'scheduled_at' => $this->appointmentSlot->format('Y-m-d\TH:i'),
+            'reason' => '',
+        ];
+
+        //act
+        $output = $this->controller->reschedule(['id' => (string) $appointment->id]);
+
+        //assert
+        self::assertStringContainsString('This appointment can no longer be cancelled or rescheduled.', $output);
+        $unchanged = (new AppointmentRepository())->findById($appointment->id);
+        self::assertSame(AppointmentStatus::Requested, $unchanged->status);
+    }
 }

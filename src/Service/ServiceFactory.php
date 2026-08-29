@@ -42,7 +42,7 @@ final class ServiceFactory
 
     public function appointmentTransitionService(): AppointmentTransitionService
     {
-        return new AppointmentTransitionService(new AppointmentRepository());
+        return new AppointmentTransitionService(new AppointmentRepository(), new PetRepository());
     }
 
     public function ownerAppointmentBoardService(): OwnerAppointmentBoardService

@@ -16,6 +16,13 @@
                     Dr. {{ vetsById[appointment.vetId].lastName }}
                     ({{ appointment.status.value }})
                     {%- if appointment.reason %} — {{ appointment.reason }}{% endif %}
+
+                    {% if appointment.status.value in ['requested', 'confirmed'] %}
+                        <a href="/owner/appointments/{{ appointment.id }}/reschedule">Reschedule</a>
+                        <form method="post" action="/owner/appointments/{{ appointment.id }}/cancel" style="display:inline">
+                            <button type="submit">Cancel</button>
+                        </form>
+                    {% endif %}
                 </li>
             {% endfor %}
         </ul>

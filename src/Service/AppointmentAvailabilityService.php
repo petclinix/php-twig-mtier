@@ -16,6 +16,7 @@ final class AppointmentAvailabilityService
     /** Grid granularity for candidate start times — not the appointment length. */
     private const SLOT_STEP_MINUTES = 30;
     private const MAX_SLOTS = 50;
+    private const SLOT_FORMAT = 'Y-m-d\TH:i';
 
     public function __construct(
         private readonly AvailabilityRepository $availability,
@@ -59,6 +60,19 @@ final class AppointmentAvailabilityService
         ksort($slots);
 
         return array_values($slots);
+    }
+
+    public function isOfferedSlot(int $vetId, DateTimeImmutable $scheduledAt, int $durationMinutes): bool
+    {
+        $target = $scheduledAt->format(self::SLOT_FORMAT);
+
+        foreach ($this->openSlots($vetId, $durationMinutes) as $slot) {
+            if ($slot->format(self::SLOT_FORMAT) === $target) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

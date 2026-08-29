@@ -42,6 +42,11 @@ final class Database
     }
 
     /**
+     * Reentrant: a nested call (e.g. a repository method that opens its own
+     * transaction, invoked from within a service-level transaction) joins the
+     * already-open transaction instead of trying to begin a second one — only
+     * the outermost call actually begins/commits/rolls back.
+     *
      * @template T
      * @param callable(): T $work
      * @return T
@@ -49,12 +54,29 @@ final class Database
     public static function runInTransaction(callable $work): mixed
     {
         $pdo = self::connection();
-        $pdo->beginTransaction();
+        $alreadyInTransaction = $pdo->inTransaction();
 
+        if ($alreadyInTransaction) {
+            return $work();
+        }else {
+            return self::doRunInTransaction($work);
+        }
+    }
+
+    /**
+     * @template T
+     * @param callable(): T $work
+     * @return T
+     */
+    private static function doRunInTransaction(callable $work): mixed
+    {
+        $pdo = self::connection();
+
+        $pdo->beginTransaction();
         try {
             $result = $work();
-            $pdo->commit();
 
+            $pdo->commit();
             return $result;
         } catch (Throwable $e) {
             $pdo->rollBack();

@@ -135,4 +135,19 @@ final class AppointmentControllerTest extends TestCase
         $updated = (new AppointmentRepository())->findById($appointment->id);
         self::assertSame(AppointmentStatus::Completed, $updated->status);
     }
+
+    public function testCancelIsNoOpWithinCancellationCutoff(): void
+    {
+        //arrange — within the 2-hour cancellation cutoff
+        $appointment = (new AppointmentRepository())->create($this->petId, $this->vet->id, new DateTimeImmutable('+1 hour'), null);
+
+        //act
+        $output = $this->controller->cancel(['id' => (string) $appointment->id]);
+
+        //assert
+        self::assertSame('', $output);
+        self::assertSame('/vet/appointments', HeaderSpy::location());
+        $updated = (new AppointmentRepository())->findById($appointment->id);
+        self::assertSame(AppointmentStatus::Requested, $updated->status);
+    }
 }

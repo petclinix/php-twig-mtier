@@ -56,19 +56,6 @@ final class OwnerAppointmentBoardService
         return compact('pets', 'vets', 'appointments', 'petsById', 'vetsById', 'slotOptions');
     }
 
-    public function isOfferedSlot(int $vetId, DateTimeImmutable $scheduledAt, int $durationMinutes): bool
-    {
-        $target = $scheduledAt->format(self::SLOT_FORMAT);
-
-        foreach ($this->availability->openSlots($vetId, $durationMinutes) as $slot) {
-            if ($slot->format(self::SLOT_FORMAT) === $target) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     /**
      * @param list<object{id: int}> $items
      * @return array<int, object>

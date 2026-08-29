@@ -221,4 +221,15 @@ final class AppointmentAvailabilityServiceTest extends TestCase
         self::assertEquals($start, $slots[0]);
         self::assertEquals($start->modify('+30 minutes'), $slots[1]);
     }
+
+    public function testIsOfferedSlotMatchesOpenSlot(): void
+    {
+        //arrange
+        $start = $this->instant('+2 weeks');
+        $this->availability->create($this->vet->id, $start, $start->modify('+30 minutes'));
+
+        //act + assert
+        self::assertTrue($this->service->isOfferedSlot($this->vet->id, $start, 30));
+        self::assertFalse($this->service->isOfferedSlot($this->vet->id, $start->modify('+1 day'), 30));
+    }
 }

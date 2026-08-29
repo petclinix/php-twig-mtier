@@ -47,6 +47,9 @@ $router->get('/owner/pets', [PetController::class, 'index'], $ownerMiddleware);
 $router->post('/owner/pets', [PetController::class, 'store'], $ownerMiddleware);
 $router->get('/owner/appointments', [AppointmentController::class, 'index'], $ownerMiddleware);
 $router->post('/owner/appointments', [AppointmentController::class, 'store'], $ownerMiddleware);
+$router->post('/owner/appointments/{id:\d+}/cancel', [AppointmentController::class, 'cancel'], $ownerMiddleware);
+$router->get('/owner/appointments/{id:\d+}/reschedule', [AppointmentController::class, 'editReschedule'], $ownerMiddleware);
+$router->post('/owner/appointments/{id:\d+}/reschedule', [AppointmentController::class, 'reschedule'], $ownerMiddleware);
 $router->get('/owner/visits', [VisitController::class, 'index'], $ownerMiddleware);
 
 $vetMiddleware = [AuthMiddleware::class, VetMiddleware::class];

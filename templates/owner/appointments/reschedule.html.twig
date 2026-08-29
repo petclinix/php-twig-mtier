@@ -1,0 +1,58 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Reschedule Appointment — PetcliniX{% endblock %}
+
+{% block content %}
+    <h2>Reschedule Appointment</h2>
+
+    <p>Currently scheduled for {{ appointment.scheduledAt|date('Y-m-d H:i') }} ({{ appointment.durationMinutes }} minutes).</p>
+
+    {% if errors is not empty %}
+        <ul>
+            {% for error in errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <form method="get" action="/owner/appointments/{{ appointment.id }}/reschedule">
+        <label>
+            Duration
+            <select name="duration_minutes">
+                {% for minutes in allowedDurations %}
+                    <option value="{{ minutes }}" {% if selectedDuration == minutes %}selected{% endif %}>{{ minutes }} minutes</option>
+                {% endfor %}
+            </select>
+        </label>
+        <button type="submit">Show available times</button>
+    </form>
+
+    {% if slotOptions is empty %}
+        <p>No open times right now for this duration. Try another duration.</p>
+    {% else %}
+        <form method="post" action="/owner/appointments/{{ appointment.id }}/reschedule">
+            <input type="hidden" name="duration_minutes" value="{{ selectedDuration }}">
+
+            <label>
+                New date and time
+                <select name="scheduled_at" required>
+                    <option value="">Select a time</option>
+                    {% for slot in slotOptions %}
+                        <option value="{{ slot.value }}" {% if old.scheduled_at|default('') == slot.value %}selected{% endif %}>{{ slot.label }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+
+            <label>
+                Reason
+                <input type="text" name="reason" value="{{ old.reason|default(appointment.reason) }}">
+            </label>
+
+            <button type="submit">Confirm Reschedule</button>
+        </form>
+    {% endif %}
+
+    <form method="post" action="/owner/appointments/{{ appointment.id }}/cancel">
+        <button type="submit">Cancel Appointment Instead</button>
+    </form>
+{% endblock %}
