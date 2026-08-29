@@ -6,6 +6,7 @@ namespace App\Repository;
 
 use App\Infrastructure\Database;
 use PDO;
+use PDOStatement;
 
 abstract class AbstractRepository
 {
@@ -21,8 +22,7 @@ abstract class AbstractRepository
      */
     protected function execute(string $sql, array $params = []): void
     {
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($params);
+        $this->statement($sql, $params);
     }
 
     protected function lastInsertId(): int
@@ -38,9 +38,7 @@ abstract class AbstractRepository
      */
     protected function fetchOne(string $sql, array $params, callable $hydrate): mixed
     {
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($params);
-        $row = $stmt->fetch();
+        $row = $this->statement($sql, $params)->fetch();
 
         return $row === false ? null : $hydrate($row);
     }
@@ -53,9 +51,17 @@ abstract class AbstractRepository
      */
     protected function fetchAll(string $sql, array $params, callable $hydrate): array
     {
+        return array_map($hydrate, $this->statement($sql, $params)->fetchAll());
+    }
+
+    /**
+     * @param array<int|string, mixed> $params
+     */
+    private function statement(string $sql, array $params): PDOStatement
+    {
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
 
-        return array_map($hydrate, $stmt->fetchAll());
+        return $stmt;
     }
 }
