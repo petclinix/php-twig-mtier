@@ -62,7 +62,7 @@ final class OwnerAppointmentBoardServiceTest extends TestCase
     public function testForOwnerReturnsNoSlotOptionsWithoutSelectedVet(): void
     {
         //act
-        $board = $this->service->forOwner($this->owner->id, 0);
+        $board = $this->service->forOwner($this->owner->id, 0, 30);
 
         //assert
         self::assertSame([], $board['slotOptions']);
@@ -77,7 +77,7 @@ final class OwnerAppointmentBoardServiceTest extends TestCase
         $this->availability->create($this->vet->id, $start, $start->modify('+30 minutes'));
 
         //act
-        $board = $this->service->forOwner($this->owner->id, $this->vet->id);
+        $board = $this->service->forOwner($this->owner->id, $this->vet->id, 30);
 
         //assert
         self::assertCount(1, $board['slotOptions']);
@@ -91,7 +91,7 @@ final class OwnerAppointmentBoardServiceTest extends TestCase
         $this->availability->create($this->vet->id, $start, $start->modify('+30 minutes'));
 
         //act + assert
-        self::assertTrue($this->service->isOfferedSlot($this->vet->id, $start));
-        self::assertFalse($this->service->isOfferedSlot($this->vet->id, $start->modify('+1 day')));
+        self::assertTrue($this->service->isOfferedSlot($this->vet->id, $start, 30));
+        self::assertFalse($this->service->isOfferedSlot($this->vet->id, $start->modify('+1 day'), 30));
     }
 }

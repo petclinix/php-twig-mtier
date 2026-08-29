@@ -63,7 +63,7 @@ final class AppointmentAvailabilityServiceTest extends TestCase
     public function testOpenSlotsReturnsEmptyWhenNoAvailability(): void
     {
         //act
-        $slots = $this->service->openSlots($this->vet->id);
+        $slots = $this->service->openSlots($this->vet->id, 30);
 
         //assert
         self::assertSame([], $slots);
@@ -76,7 +76,7 @@ final class AppointmentAvailabilityServiceTest extends TestCase
         $this->availability->create($this->vet->id, $start, $start->modify('+90 minutes'));
 
         //act
-        $slots = $this->service->openSlots($this->vet->id);
+        $slots = $this->service->openSlots($this->vet->id, 30);
 
         //assert
         self::assertCount(3, $slots);
@@ -92,7 +92,7 @@ final class AppointmentAvailabilityServiceTest extends TestCase
         $this->availability->create($this->vet->id, $start, $start->modify('+100 minutes'));
 
         //act
-        $slots = $this->service->openSlots($this->vet->id);
+        $slots = $this->service->openSlots($this->vet->id, 30);
 
         //assert
         self::assertCount(3, $slots);
@@ -107,7 +107,7 @@ final class AppointmentAvailabilityServiceTest extends TestCase
         $this->appointments->create($this->petId, $this->vet->id, $start->modify('+30 minutes'), null);
 
         //act
-        $slots = $this->service->openSlots($this->vet->id);
+        $slots = $this->service->openSlots($this->vet->id, 30);
 
         //assert
         self::assertCount(2, $slots);
@@ -124,7 +124,7 @@ final class AppointmentAvailabilityServiceTest extends TestCase
         $this->appointments->updateStatus($appointment->id, AppointmentStatus::Cancelled);
 
         //act
-        $slots = $this->service->openSlots($this->vet->id);
+        $slots = $this->service->openSlots($this->vet->id, 30);
 
         //assert
         self::assertCount(3, $slots);
@@ -139,7 +139,7 @@ final class AppointmentAvailabilityServiceTest extends TestCase
         $this->availability->create($this->vet->id, $windowStart, $windowEnd);
 
         //act
-        $slots = $this->service->openSlots($this->vet->id);
+        $slots = $this->service->openSlots($this->vet->id, 30);
 
         //assert
         self::assertNotEmpty($slots);
@@ -156,7 +156,7 @@ final class AppointmentAvailabilityServiceTest extends TestCase
         $this->availability->create($this->vet->id, $start, $start->modify('+60 days'));
 
         //act
-        $slots = $this->service->openSlots($this->vet->id);
+        $slots = $this->service->openSlots($this->vet->id, 30);
 
         //assert
         self::assertCount(50, $slots);
@@ -176,7 +176,7 @@ final class AppointmentAvailabilityServiceTest extends TestCase
 
         try {
             //act
-            $slots = $this->service->openSlots($this->vet->id);
+            $slots = $this->service->openSlots($this->vet->id, 30);
 
             //assert
             self::assertCount(1, $slots);
@@ -186,5 +186,39 @@ final class AppointmentAvailabilityServiceTest extends TestCase
                 ->prepare('DELETE FROM users WHERE email = :email')
                 ->execute(['email' => $otherVetEmail]);
         }
+    }
+
+    public function testOpenSlotsUsesEachBookedAppointmentsOwnDuration(): void
+    {
+        //arrange — a 2-hour window with a 60-minute booking starting mid-window
+        $start = $this->instant('+2 weeks');
+        $this->availability->create($this->vet->id, $start, $start->modify('+2 hours'));
+        $this->appointments->create($this->petId, $this->vet->id, $start->modify('+30 minutes'), null, 60);
+
+        //act — request 30-minute slots
+        $slots = $this->service->openSlots($this->vet->id, 30);
+
+        //assert — the 60-minute booking occupies 10:30-11:30, so the 11:00 slot
+        // must be excluded too, not just the one matching its own start time
+        // (a fixed-30-minute assumption would have wrongly offered 11:00)
+        self::assertCount(2, $slots);
+        self::assertEquals($start, $slots[0]);
+        self::assertEquals($start->modify('+90 minutes'), $slots[1]);
+    }
+
+    public function testOpenSlotsExcludesCandidatesThatDoNotFitRequestedDuration(): void
+    {
+        //arrange — a 90-minute window
+        $start = $this->instant('+2 weeks');
+        $this->availability->create($this->vet->id, $start, $start->modify('+90 minutes'));
+
+        //act — request 60-minute slots
+        $slots = $this->service->openSlots($this->vet->id, 60);
+
+        //assert — only two 60-minute slots fit in a 90-minute window; the
+        // grid-final 11:00 start wouldn't leave room for a 60-minute appointment
+        self::assertCount(2, $slots);
+        self::assertEquals($start, $slots[0]);
+        self::assertEquals($start->modify('+30 minutes'), $slots[1]);
     }
 }

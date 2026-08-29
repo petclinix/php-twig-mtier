@@ -73,6 +73,80 @@ final class AppointmentRepositoryTest extends TestCase
         self::assertSame(AppointmentStatus::Requested, $second->status);
     }
 
+    public function testCreateRejectsOverlappingBookingAtDifferentStartTime(): void
+    {
+        //arrange — a 60-minute booking starting 30 minutes into the slot
+        $this->appointments->create($this->petId, $this->vet->id, $this->slot->modify('+30 minutes'), null, 60);
+
+        //assert — a fixed-30-minute assumption would have thought this earlier
+        // booking already ended by +60 minutes; the real 60-minute booking is
+        // still running until +90 minutes, so this must be rejected
+        $this->expectException(AppointmentSlotUnavailableException::class);
+
+        //act
+        $this->appointments->create($this->petId, $this->vet->id, $this->slot->modify('+60 minutes'), null, 30);
+    }
+
+    public function testConcurrentOverlappingBookingsAtDifferentStartTimesAreSerialized(): void
+    {
+        //arrange — two independent connections, simulating two concurrent requests
+        $connectionA = Database::newConnection();
+        $connectionB = Database::newConnection();
+
+        $lock = 'SELECT id FROM vets WHERE id = :vet_id FOR UPDATE';
+        $insert = 'INSERT INTO appointments (pet_id, vet_id, scheduled_at, duration_minutes, reason)
+                    VALUES (:pet_id, :vet_id, :scheduled_at, :duration_minutes, NULL)';
+
+        // A books a 60-minute slot starting at $this->slot.
+        $aStart = $this->slot;
+
+        //act — A locks the vet row and inserts but does not commit yet
+        $connectionA->beginTransaction();
+        $connectionA->prepare($lock)->execute(['vet_id' => $this->vet->id]);
+        $connectionA->prepare($insert)->execute([
+            'pet_id' => $this->petId,
+            'vet_id' => $this->vet->id,
+            'scheduled_at' => $aStart->format('Y-m-d H:i:s'),
+            'duration_minutes' => 60,
+        ]);
+
+        // B attempts an overlapping booking at a different start time (+30
+        // minutes into A's still-uncommitted 60-minute span). It must not be
+        // allowed to proceed while A is still in flight. A short lock-wait
+        // timeout keeps the test fast instead of hanging if this regresses.
+        $bStart = $aStart->modify('+30 minutes');
+        $connectionB->exec('SET SESSION innodb_lock_wait_timeout = 2');
+
+        $blocked = false;
+        try {
+            $connectionB->beginTransaction();
+            $connectionB->prepare($lock)->execute(['vet_id' => $this->vet->id]);
+        } catch (PDOException) {
+            $blocked = true;
+        } finally {
+            if ($connectionB->inTransaction()) {
+                $connectionB->rollBack();
+            }
+        }
+
+        $connectionA->commit();
+
+        //assert
+        self::assertTrue($blocked, 'A second concurrent overlapping booking must be blocked, not silently allowed through.');
+
+        $stmt = $connectionA->prepare(
+            "SELECT COUNT(*) FROM appointments
+             WHERE vet_id = :vet_id AND status IN ('requested', 'confirmed')
+               AND scheduled_at < :end AND scheduled_at + INTERVAL duration_minutes MINUTE > :start"
+        );
+        $stmt->execute([
+            'vet_id' => $this->vet->id,
+            'start' => $bStart->format('Y-m-d H:i:s'),
+            'end' => $bStart->modify('+30 minutes')->format('Y-m-d H:i:s'),
+        ]);
+        self::assertSame(1, (int) $stmt->fetchColumn());
+    }
+
     public function testConcurrentBookingsOfSameSlotAreSerializedByTheDatabase(): void
     {
         //arrange — two independent connections, simulating two concurrent requests

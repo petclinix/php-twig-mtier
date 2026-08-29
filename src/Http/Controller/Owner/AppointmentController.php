@@ -22,6 +22,10 @@ final class AppointmentController
 
     private const SLOT_FORMAT = 'Y-m-d\TH:i';
 
+    /** @var list<int> */
+    private const ALLOWED_DURATIONS = [15, 30, 45, 60, 90];
+    private const DEFAULT_DURATION_MINUTES = 30;
+
     public function __construct(
         private readonly Environment $twig,
         private readonly ServiceFactory $services = new ServiceFactory(),
@@ -30,7 +34,12 @@ final class AppointmentController
 
     public function index(): string
     {
-        return $this->render([], [], Input::queryInt('vet_id'));
+        return $this->render(
+            [],
+            [],
+            Input::queryInt('vet_id'),
+            Input::queryInt('duration_minutes', self::DEFAULT_DURATION_MINUTES),
+        );
     }
 
     public function store(): string
@@ -50,6 +59,9 @@ final class AppointmentController
         $vet = (new VetRepository())->findById($vetId);
         $errors->addIf($vet === null, 'Choose a vet.');
 
+        $durationMinutes = Input::int('duration_minutes', self::DEFAULT_DURATION_MINUTES);
+        $errors->addIf(!in_array($durationMinutes, self::ALLOWED_DURATIONS, true), 'Choose a valid duration.');
+
         $scheduledAtInput = Input::string('scheduled_at');
         $scheduledAt = null;
         if ($scheduledAtInput === '') {
@@ -60,7 +72,7 @@ final class AppointmentController
                 $errors->add('Date and time must be valid.');
             } elseif ($scheduledAt < new DateTimeImmutable('now')) {
                 $errors->add('Choose a time in the future.');
-            } elseif ($vet !== null && !$this->boardService()->isOfferedSlot($vet->id, $scheduledAt)) {
+            } elseif ($vet !== null && !$this->boardService()->isOfferedSlot($vet->id, $scheduledAt, $durationMinutes)) {
                 $errors->add('That time is no longer available. Please choose another.');
             }
         }
@@ -69,7 +81,7 @@ final class AppointmentController
 
         if ($errors->isEmpty() && $scheduledAt !== null) {
             try {
-                (new AppointmentRepository())->create($petId, $vetId, $scheduledAt, $reason !== '' ? $reason : null);
+                (new AppointmentRepository())->create($petId, $vetId, $scheduledAt, $reason !== '' ? $reason : null, $durationMinutes);
 
                 header('Location: /owner/appointments');
 
@@ -79,22 +91,27 @@ final class AppointmentController
             }
         }
 
-        return $this->render($errors->all(), $_POST, $vetId);
+        return $this->render($errors->all(), $_POST, $vetId, $durationMinutes);
     }
 
     /**
      * @param list<string> $errors
      * @param array<string, string> $old
      */
-    private function render(array $errors, array $old = [], int $selectedVetId = 0): string
+    private function render(array $errors, array $old = [], int $selectedVetId = 0, int $requestedDuration = self::DEFAULT_DURATION_MINUTES): string
     {
         $owner = $this->currentOwner();
-        $board = $this->boardService()->forOwner($owner->id, $selectedVetId);
+        $selectedDuration = in_array($requestedDuration, self::ALLOWED_DURATIONS, true)
+            ? $requestedDuration
+            : self::DEFAULT_DURATION_MINUTES;
+        $board = $this->boardService()->forOwner($owner->id, $selectedVetId, $selectedDuration);
 
         return $this->twig->render('owner/appointments/index.html.twig', $board + [
             'errors' => $errors,
             'old' => $old,
             'selectedVetId' => $selectedVetId,
+            'selectedDuration' => $selectedDuration,
+            'allowedDurations' => self::ALLOWED_DURATIONS,
         ]);
     }
 

@@ -44,6 +44,14 @@
                     {% endfor %}
                 </select>
             </label>
+            <label>
+                Duration
+                <select name="duration_minutes">
+                    {% for minutes in allowedDurations %}
+                        <option value="{{ minutes }}" {% if selectedDuration == minutes %}selected{% endif %}>{{ minutes }} minutes</option>
+                    {% endfor %}
+                </select>
+            </label>
             <button type="submit">Show available times</button>
         </form>
 
@@ -53,6 +61,7 @@
             {% else %}
                 <form method="post" action="/owner/appointments">
                     <input type="hidden" name="vet_id" value="{{ selectedVetId }}">
+                    <input type="hidden" name="duration_minutes" value="{{ selectedDuration }}">
 
                     <label>
                         Pet

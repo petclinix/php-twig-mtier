@@ -13,7 +13,8 @@ use DateTimeImmutable;
 
 final class AppointmentAvailabilityService
 {
-    private const SLOT_MINUTES = 30;
+    /** Grid granularity for candidate start times — not the appointment length. */
+    private const SLOT_STEP_MINUTES = 30;
     private const MAX_SLOTS = 50;
 
     public function __construct(
@@ -25,7 +26,7 @@ final class AppointmentAvailabilityService
     /**
      * @return list<DateTimeImmutable>
      */
-    public function openSlots(int $vetId): array
+    public function openSlots(int $vetId, int $durationMinutes): array
     {
         $now = new DateTimeImmutable('now');
 
@@ -33,14 +34,14 @@ final class AppointmentAvailabilityService
         $booked = array_map(
             static fn (Appointment $appointment): array => [
                 $appointment->scheduledAt,
-                $appointment->scheduledAt->modify('+' . self::SLOT_MINUTES . ' minutes'),
+                $appointment->scheduledAt->modify('+' . $appointment->durationMinutes . ' minutes'),
             ],
             $this->appointments->findActiveByVetId($vetId),
         );
 
         $slots = [];
         foreach ($this->availability->findAllByVetId($vetId) as $window) {
-            foreach ($this->candidatesInWindow($window, $now) as $key => $candidate) {
+            foreach ($this->candidatesInWindow($window, $now, $durationMinutes) as $key => $candidate) {
                 if (isset($slots[$key])) {
                     continue;
                 }
@@ -49,7 +50,7 @@ final class AppointmentAvailabilityService
                     break 2;
                 }
 
-                if (!$this->overlapsAny($candidate, $booked)) {
+                if (!$this->overlapsAny($candidate, $durationMinutes, $booked)) {
                     $slots[$key] = $candidate;
                 }
             }
@@ -63,18 +64,19 @@ final class AppointmentAvailabilityService
     /**
      * @return iterable<string, DateTimeImmutable>
      */
-    private function candidatesInWindow(Availability $window, DateTimeImmutable $now): iterable
+    private function candidatesInWindow(Availability $window, DateTimeImmutable $now, int $durationMinutes): iterable
     {
-        $step = new DateInterval('PT' . self::SLOT_MINUTES . 'M');
+        $step = new DateInterval('PT' . self::SLOT_STEP_MINUTES . 'M');
+        $duration = new DateInterval('PT' . $durationMinutes . 'M');
         $current = $window->startsAt;
 
         if ($current < $now) {
             $elapsedMinutes = ($now->getTimestamp() - $current->getTimestamp()) / 60;
-            $steps = (int) ceil($elapsedMinutes / self::SLOT_MINUTES);
-            $current = $current->add(new DateInterval('PT' . ($steps * self::SLOT_MINUTES) . 'M'));
+            $steps = (int) ceil($elapsedMinutes / self::SLOT_STEP_MINUTES);
+            $current = $current->add(new DateInterval('PT' . ($steps * self::SLOT_STEP_MINUTES) . 'M'));
         }
 
-        while ($current->add($step) <= $window->endsAt) {
+        while ($current->add($duration) <= $window->endsAt) {
             yield $current->format('Y-m-d H:i') => $current;
             $current = $current->add($step);
         }
@@ -83,9 +85,9 @@ final class AppointmentAvailabilityService
     /**
      * @param list<array{0: DateTimeImmutable, 1: DateTimeImmutable}> $bookedIntervals
      */
-    private function overlapsAny(DateTimeImmutable $start, array $bookedIntervals): bool
+    private function overlapsAny(DateTimeImmutable $start, int $durationMinutes, array $bookedIntervals): bool
     {
-        $end = $start->modify('+' . self::SLOT_MINUTES . ' minutes');
+        $end = $start->modify('+' . $durationMinutes . ' minutes');
 
         foreach ($bookedIntervals as [$bookedStart, $bookedEnd]) {
             if ($start < $bookedEnd && $bookedStart < $end) {

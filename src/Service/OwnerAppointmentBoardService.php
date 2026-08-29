@@ -34,7 +34,7 @@ final class OwnerAppointmentBoardService
      *     slotOptions: list<array{value: string, label: string}>,
      * }
      */
-    public function forOwner(int $ownerId, int $selectedVetId): array
+    public function forOwner(int $ownerId, int $selectedVetId, int $durationMinutes): array
     {
         $pets = $this->pets->findAllByOwnerId($ownerId);
         $petsById = $this->indexById($pets);
@@ -49,18 +49,18 @@ final class OwnerAppointmentBoardService
                     'value' => $slot->format(self::SLOT_FORMAT),
                     'label' => $slot->format('Y-m-d H:i'),
                 ],
-                $this->availability->openSlots($selectedVetId),
+                $this->availability->openSlots($selectedVetId, $durationMinutes),
             );
         }
 
         return compact('pets', 'vets', 'appointments', 'petsById', 'vetsById', 'slotOptions');
     }
 
-    public function isOfferedSlot(int $vetId, DateTimeImmutable $scheduledAt): bool
+    public function isOfferedSlot(int $vetId, DateTimeImmutable $scheduledAt, int $durationMinutes): bool
     {
         $target = $scheduledAt->format(self::SLOT_FORMAT);
 
-        foreach ($this->availability->openSlots($vetId) as $slot) {
+        foreach ($this->availability->openSlots($vetId, $durationMinutes) as $slot) {
             if ($slot->format(self::SLOT_FORMAT) === $target) {
                 return true;
             }

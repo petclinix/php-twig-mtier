@@ -253,4 +253,68 @@ final class AppointmentControllerTest extends TestCase
         self::assertSame('', $output);
         self::assertSame('/owner/appointments', HeaderSpy::location());
     }
+
+    public function testStoreWithNonDefaultDurationCreatesAppointmentWithThatDuration(): void
+    {
+        //arrange
+        $_POST = [
+            'pet_id' => (string) $this->petId,
+            'vet_id' => (string) $this->vet->id,
+            'scheduled_at' => $this->appointmentSlot->format('Y-m-d\TH:i'),
+            'duration_minutes' => '60',
+            'reason' => 'Surgery',
+        ];
+
+        //act
+        $output = $this->controller->store([]);
+
+        //assert
+        self::assertSame('', $output);
+        self::assertSame('/owner/appointments', HeaderSpy::location());
+        $appointments = (new AppointmentRepository())->findAllByPetIds([$this->petId]);
+        self::assertCount(1, $appointments);
+        self::assertSame(60, $appointments[0]->durationMinutes);
+    }
+
+    public function testStoreWithInvalidDurationShowsValidationError(): void
+    {
+        //arrange
+        $_POST = [
+            'pet_id' => (string) $this->petId,
+            'vet_id' => (string) $this->vet->id,
+            'scheduled_at' => $this->appointmentSlot->format('Y-m-d\TH:i'),
+            'duration_minutes' => '99',
+            'reason' => '',
+        ];
+
+        //act
+        $output = $this->controller->store([]);
+
+        //assert
+        self::assertStringContainsString('Choose a valid duration.', $output);
+        self::assertSame([], HeaderSpy::$headers);
+    }
+
+    public function testStoreRejectsBookingOverlappingLongerExistingAppointmentAtDifferentStartTime(): void
+    {
+        //arrange — a 60-minute booking starting 30 minutes into the availability window
+        (new AppointmentRepository())->create($this->petId, $this->vet->id, $this->appointmentSlot->modify('+30 minutes'), 'Surgery', 60);
+        $_POST = [
+            'pet_id' => (string) $this->petId,
+            'vet_id' => (string) $this->vet->id,
+            // starts where a fixed-30-minute assumption would have thought the
+            // existing booking already ended, but the real 60-minute booking is
+            // still running until +90 minutes
+            'scheduled_at' => $this->appointmentSlot->modify('+60 minutes')->format('Y-m-d\TH:i'),
+            'duration_minutes' => '30',
+            'reason' => '',
+        ];
+
+        //act
+        $output = $this->controller->store([]);
+
+        //assert
+        self::assertStringContainsString('That time is no longer available. Please choose another.', $output);
+        self::assertSame([], HeaderSpy::$headers);
+    }
 }
