@@ -5,29 +5,23 @@ declare(strict_types=1);
 namespace App\Http\Controller\Vet;
 
 use App\Domain\AppointmentStatus;
-use App\Repository\AppointmentRepository;
-use App\Repository\OwnerRepository;
-use App\Repository\PetRepository;
-use App\Service\AppointmentTransitionService;
-use App\Service\VetAppointmentBoardService;
+use App\Service\ServiceFactory;
 use Twig\Environment;
 
 final class AppointmentController
 {
     use ResolvesVet;
 
-    public function __construct(private readonly Environment $twig)
-    {
+    public function __construct(
+        private readonly Environment $twig,
+        private readonly ServiceFactory $services = new ServiceFactory(),
+    ) {
     }
 
     public function index(): string
     {
         $vet = $this->currentVet();
-        $board = (new VetAppointmentBoardService(
-            new AppointmentRepository(),
-            new PetRepository(),
-            new OwnerRepository(),
-        ))->forVet($vet->id);
+        $board = $this->services->vetAppointmentBoardService()->forVet($vet->id);
 
         return $this->twig->render('vet/appointments/index.html.twig', $board);
     }
@@ -55,7 +49,7 @@ final class AppointmentController
     private function transition(array $vars, array $allowedFrom, AppointmentStatus $to): string
     {
         $vet = $this->currentVet();
-        (new AppointmentTransitionService(new AppointmentRepository()))
+        $this->services->appointmentTransitionService()
             ->transition((int) $vars['id'], $vet->id, $allowedFrom, $to);
 
         header('Location: /vet/appointments');

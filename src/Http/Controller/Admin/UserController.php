@@ -5,15 +5,16 @@ declare(strict_types=1);
 namespace App\Http\Controller\Admin;
 
 use App\Http\Session;
-use App\Repository\ActivityLogRepository;
 use App\Repository\UserRepository;
-use App\Service\AdminService;
+use App\Service\ServiceFactory;
 use Twig\Environment;
 
 final class UserController
 {
-    public function __construct(private readonly Environment $twig)
-    {
+    public function __construct(
+        private readonly Environment $twig,
+        private readonly ServiceFactory $services = new ServiceFactory(),
+    ) {
     }
 
     public function index(): string
@@ -48,8 +49,7 @@ final class UserController
         $targetId = (int) $vars['id'];
 
         if ($actorId !== null && $actorId !== $targetId) {
-            (new AdminService(new UserRepository(), new ActivityLogRepository()))
-                ->setUserActive($actorId, $targetId, $active);
+            $this->services->adminService()->setUserActive($actorId, $targetId, $active);
         }
 
         header('Location: /admin/users');

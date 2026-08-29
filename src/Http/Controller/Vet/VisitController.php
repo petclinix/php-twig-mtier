@@ -8,16 +8,17 @@ use App\Domain\Appointment;
 use App\Domain\AppointmentStatus;
 use App\Repository\AppointmentRepository;
 use App\Repository\PetRepository;
-use App\Repository\VisitRepository;
-use App\Service\VisitService;
+use App\Service\ServiceFactory;
 use Twig\Environment;
 
 final class VisitController
 {
     use ResolvesVet;
 
-    public function __construct(private readonly Environment $twig)
-    {
+    public function __construct(
+        private readonly Environment $twig,
+        private readonly ServiceFactory $services = new ServiceFactory(),
+    ) {
     }
 
     /**
@@ -56,8 +57,8 @@ final class VisitController
         $diagnosis = trim((string) ($_POST['diagnosis'] ?? ''));
         $notes = trim((string) ($_POST['notes'] ?? ''));
 
-        $service = new VisitService(new AppointmentRepository(), new VisitRepository());
-        $service->recordVisit($appointment, $diagnosis !== '' ? $diagnosis : null, $notes !== '' ? $notes : null);
+        $this->services->visitService()
+            ->recordVisit($appointment, $diagnosis !== '' ? $diagnosis : null, $notes !== '' ? $notes : null);
 
         header('Location: /vet/appointments');
 

@@ -8,26 +8,20 @@ use App\Domain\Role;
 use App\Http\Session;
 use App\Http\Validation\ErrorBag;
 use App\Http\Validation\Input;
-use App\Repository\ActivityLogRepository;
-use App\Repository\OwnerRepository;
-use App\Repository\UserRepository;
-use App\Repository\VetRepository;
 use App\Service\AuthService;
 use App\Service\Exception\EmailAlreadyRegisteredException;
+use App\Service\ServiceFactory;
 use Twig\Environment;
 
 final class AuthController
 {
     private readonly AuthService $auth;
 
-    public function __construct(private readonly Environment $twig)
-    {
-        $this->auth = new AuthService(
-            new UserRepository(),
-            new OwnerRepository(),
-            new VetRepository(),
-            new ActivityLogRepository(),
-        );
+    public function __construct(
+        private readonly Environment $twig,
+        private readonly ServiceFactory $services = new ServiceFactory(),
+    ) {
+        $this->auth = $this->services->authService();
     }
 
     public function showRegister(): string

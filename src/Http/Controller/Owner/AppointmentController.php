@@ -8,11 +8,10 @@ use App\Http\Validation\ErrorBag;
 use App\Http\Validation\Input;
 use App\Http\Validation\Validate;
 use App\Repository\AppointmentRepository;
-use App\Repository\AvailabilityRepository;
 use App\Repository\PetRepository;
 use App\Repository\VetRepository;
-use App\Service\AppointmentAvailabilityService;
 use App\Service\OwnerAppointmentBoardService;
+use App\Service\ServiceFactory;
 use DateTimeImmutable;
 use Twig\Environment;
 
@@ -22,8 +21,10 @@ final class AppointmentController
 
     private const SLOT_FORMAT = 'Y-m-d\TH:i';
 
-    public function __construct(private readonly Environment $twig)
-    {
+    public function __construct(
+        private readonly Environment $twig,
+        private readonly ServiceFactory $services = new ServiceFactory(),
+    ) {
     }
 
     public function index(): string
@@ -94,11 +95,6 @@ final class AppointmentController
 
     private function boardService(): OwnerAppointmentBoardService
     {
-        return new OwnerAppointmentBoardService(
-            new PetRepository(),
-            new VetRepository(),
-            new AppointmentRepository(),
-            new AppointmentAvailabilityService(new AvailabilityRepository(), new AppointmentRepository()),
-        );
+        return $this->services->ownerAppointmentBoardService();
     }
 }
