@@ -53,7 +53,7 @@ CREATE TABLE appointments (
     vet_id INT UNSIGNED NOT NULL,
     scheduled_at DATETIME NOT NULL,
     duration_minutes INT UNSIGNED NOT NULL DEFAULT 30,
-    status ENUM('requested', 'confirmed', 'cancelled', 'completed') NOT NULL DEFAULT 'requested',
+    status ENUM('requested', 'confirmed', 'cancelled', 'completed', 'no_show') NOT NULL DEFAULT 'requested',
     reason VARCHAR(255) NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     -- NULL for cancelled/completed rows so they never collide in the unique key

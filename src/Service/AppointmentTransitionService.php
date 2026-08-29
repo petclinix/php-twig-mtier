@@ -37,6 +37,10 @@ final class AppointmentTransitionService
             return false;
         }
 
+        if ($to === AppointmentStatus::NoShow && !$this->hasScheduledTimePassed($appointment)) {
+            return false;
+        }
+
         $this->appointments->updateStatus($appointmentId, $to);
 
         return true;
@@ -105,5 +109,10 @@ final class AppointmentTransitionService
     private function isBeforeCutoff(Appointment $appointment): bool
     {
         return new DateTimeImmutable('now') < $appointment->scheduledAt->modify('-' . self::CANCELLATION_CUTOFF_HOURS . ' hours');
+    }
+
+    private function hasScheduledTimePassed(Appointment $appointment): bool
+    {
+        return new DateTimeImmutable('now') >= $appointment->scheduledAt;
     }
 }

@@ -207,4 +207,45 @@ final class AppointmentTransitionServiceTest extends TestCase
         //act
         $this->service->rescheduleAsOwner($appointment->id, $this->owner->id, new DateTimeImmutable('+2 weeks'), 30, null);
     }
+
+    public function testTransitionToNoShowSucceedsAfterScheduledTimeHasPassed(): void
+    {
+        //arrange
+        $appointment = $this->appointments->create($this->petId, $this->vet->id, new DateTimeImmutable('-1 day'), null);
+        $this->appointments->updateStatus($appointment->id, AppointmentStatus::Confirmed);
+
+        //act
+        $result = $this->service->transition($appointment->id, $this->vet->id, [AppointmentStatus::Confirmed], AppointmentStatus::NoShow);
+
+        //assert
+        self::assertTrue($result);
+        self::assertSame(AppointmentStatus::NoShow, $this->appointments->findById($appointment->id)->status);
+    }
+
+    public function testTransitionToNoShowIsNoOpBeforeScheduledTime(): void
+    {
+        //arrange
+        $appointment = $this->appointments->create($this->petId, $this->vet->id, new DateTimeImmutable('+1 week'), null);
+        $this->appointments->updateStatus($appointment->id, AppointmentStatus::Confirmed);
+
+        //act
+        $result = $this->service->transition($appointment->id, $this->vet->id, [AppointmentStatus::Confirmed], AppointmentStatus::NoShow);
+
+        //assert
+        self::assertFalse($result);
+        self::assertSame(AppointmentStatus::Confirmed, $this->appointments->findById($appointment->id)->status);
+    }
+
+    public function testTransitionToNoShowIsNoOpWhenStillOnlyRequested(): void
+    {
+        //arrange — never confirmed, even though the scheduled time has passed
+        $appointment = $this->appointments->create($this->petId, $this->vet->id, new DateTimeImmutable('-1 day'), null);
+
+        //act
+        $result = $this->service->transition($appointment->id, $this->vet->id, [AppointmentStatus::Confirmed], AppointmentStatus::NoShow);
+
+        //assert
+        self::assertFalse($result);
+        self::assertSame(AppointmentStatus::Requested, $this->appointments->findById($appointment->id)->status);
+    }
 }

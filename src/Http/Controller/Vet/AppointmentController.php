@@ -44,6 +44,14 @@ final class AppointmentController
 
     /**
      * @param array<string, string> $vars
+     */
+    public function markNoShow(array $vars): string
+    {
+        return $this->transition($vars, [AppointmentStatus::Confirmed], AppointmentStatus::NoShow);
+    }
+
+    /**
+     * @param array<string, string> $vars
      * @param list<AppointmentStatus> $allowedFrom
      */
     private function transition(array $vars, array $allowedFrom, AppointmentStatus $to): string

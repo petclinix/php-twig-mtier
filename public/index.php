@@ -59,6 +59,7 @@ $router->post('/vet/availability/{id:\d+}/delete', [VetAvailabilityController::c
 $router->get('/vet/appointments', [VetAppointmentController::class, 'index'], $vetMiddleware);
 $router->post('/vet/appointments/{id:\d+}/confirm', [VetAppointmentController::class, 'confirm'], $vetMiddleware);
 $router->post('/vet/appointments/{id:\d+}/cancel', [VetAppointmentController::class, 'cancel'], $vetMiddleware);
+$router->post('/vet/appointments/{id:\d+}/no-show', [VetAppointmentController::class, 'markNoShow'], $vetMiddleware);
 $router->get('/vet/appointments/{id:\d+}/visit', [VetVisitController::class, 'create'], $vetMiddleware);
 $router->post('/vet/appointments/{id:\d+}/visit', [VetVisitController::class, 'store'], $vetMiddleware);
 

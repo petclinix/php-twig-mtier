@@ -30,6 +30,9 @@
                         <form method="post" action="/vet/appointments/{{ appointment.id }}/cancel" style="display:inline">
                             <button type="submit">Cancel</button>
                         </form>
+                        <form method="post" action="/vet/appointments/{{ appointment.id }}/no-show" style="display:inline">
+                            <button type="submit">Mark No-Show</button>
+                        </form>
                     {% endif %}
                 </li>
             {% endfor %}

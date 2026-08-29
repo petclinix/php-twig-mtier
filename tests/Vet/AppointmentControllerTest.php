@@ -150,4 +150,20 @@ final class AppointmentControllerTest extends TestCase
         $updated = (new AppointmentRepository())->findById($appointment->id);
         self::assertSame(AppointmentStatus::Requested, $updated->status);
     }
+
+    public function testMarkNoShowTransitionsConfirmedToNoShow(): void
+    {
+        //arrange
+        $appointment = (new AppointmentRepository())->create($this->petId, $this->vet->id, new DateTimeImmutable('-1 day'), null);
+        (new AppointmentRepository())->updateStatus($appointment->id, AppointmentStatus::Confirmed);
+
+        //act
+        $output = $this->controller->markNoShow(['id' => (string) $appointment->id]);
+
+        //assert
+        self::assertSame('', $output);
+        self::assertSame('/vet/appointments', HeaderSpy::location());
+        $updated = (new AppointmentRepository())->findById($appointment->id);
+        self::assertSame(AppointmentStatus::NoShow, $updated->status);
+    }
 }
