@@ -6,6 +6,7 @@ namespace App\Http\Controller\Admin;
 
 use App\Repository\ActivityLogRepository;
 use App\Repository\UserRepository;
+use App\Service\ActivityLogService;
 use Twig\Environment;
 
 final class ActivityController
@@ -16,24 +17,9 @@ final class ActivityController
 
     public function index(): string
     {
-        $entries = (new ActivityLogRepository())->findRecent(100);
+        $board = (new ActivityLogService(new ActivityLogRepository(), new UserRepository()))
+            ->recentWithUsers();
 
-        $userRepository = new UserRepository();
-        $usersById = [];
-        foreach ($entries as $entry) {
-            if ($entry->userId === null || isset($usersById[$entry->userId])) {
-                continue;
-            }
-
-            $user = $userRepository->findById($entry->userId);
-            if ($user !== null) {
-                $usersById[$user->id] = $user;
-            }
-        }
-
-        return $this->twig->render('admin/activity/index.html.twig', [
-            'entries' => $entries,
-            'usersById' => $usersById,
-        ]);
+        return $this->twig->render('admin/activity/index.html.twig', $board);
     }
 }

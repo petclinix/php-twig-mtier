@@ -8,6 +8,7 @@ use App\Domain\AppointmentStatus;
 use App\Repository\AppointmentRepository;
 use App\Repository\OwnerRepository;
 use App\Repository\PetRepository;
+use App\Service\AppointmentTransitionService;
 use App\Service\VetAppointmentBoardService;
 use Twig\Environment;
 
@@ -54,13 +55,8 @@ final class AppointmentController
     private function transition(array $vars, array $allowedFrom, AppointmentStatus $to): string
     {
         $vet = $this->currentVet();
-        $appointmentId = (int) $vars['id'];
-        $repository = new AppointmentRepository();
-        $appointment = $repository->findById($appointmentId);
-
-        if ($appointment !== null && $appointment->vetId === $vet->id && in_array($appointment->status, $allowedFrom, true)) {
-            $repository->updateStatus($appointmentId, $to);
-        }
+        (new AppointmentTransitionService(new AppointmentRepository()))
+            ->transition((int) $vars['id'], $vet->id, $allowedFrom, $to);
 
         header('Location: /vet/appointments');
 
