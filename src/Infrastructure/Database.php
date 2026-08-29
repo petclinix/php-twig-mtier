@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Infrastructure;
 
 use PDO;
+use Throwable;
 
 final class Database
 {
@@ -32,5 +33,26 @@ final class Database
         }
 
         return self::$connection;
+    }
+
+    /**
+     * @template T
+     * @param callable(): T $work
+     * @return T
+     */
+    public static function runInTransaction(callable $work): mixed
+    {
+        $pdo = self::connection();
+        $pdo->beginTransaction();
+
+        try {
+            $result = $work();
+            $pdo->commit();
+
+            return $result;
+        } catch (Throwable $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
     }
 }

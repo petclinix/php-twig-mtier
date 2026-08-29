@@ -12,7 +12,6 @@ use App\Repository\OwnerRepository;
 use App\Repository\UserRepository;
 use App\Repository\VetRepository;
 use App\Service\Exception\EmailAlreadyRegisteredException;
-use Throwable;
 
 final class AuthService
 {
@@ -33,10 +32,7 @@ final class AuthService
             throw new EmailAlreadyRegisteredException($email);
         }
 
-        $pdo = Database::connection();
-        $pdo->beginTransaction();
-
-        try {
+        return Database::runInTransaction(function () use ($email, $password, $role, $profile): User {
             $user = $this->users->create($email, password_hash($password, PASSWORD_BCRYPT), $role);
 
             if ($role === Role::Owner) {
@@ -58,13 +54,8 @@ final class AuthService
 
             $this->activityLog->record($user->id, 'user_registered', ['role' => $role->value]);
 
-            $pdo->commit();
-        } catch (Throwable $e) {
-            $pdo->rollBack();
-            throw $e;
-        }
-
-        return $user;
+            return $user;
+        });
     }
 
     public function attempt(string $email, string $password): ?User

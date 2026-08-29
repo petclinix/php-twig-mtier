@@ -10,7 +10,6 @@ use App\Domain\Visit;
 use App\Infrastructure\Database;
 use App\Repository\AppointmentRepository;
 use App\Repository\VisitRepository;
-use Throwable;
 
 final class VisitService
 {
@@ -22,18 +21,11 @@ final class VisitService
 
     public function recordVisit(Appointment $appointment, ?string $diagnosis, ?string $notes): Visit
     {
-        $pdo = Database::connection();
-        $pdo->beginTransaction();
-
-        try {
+        return Database::runInTransaction(function () use ($appointment, $diagnosis, $notes): Visit {
             $visit = $this->visits->create($appointment->id, $diagnosis, $notes);
             $this->appointments->updateStatus($appointment->id, AppointmentStatus::Completed);
-            $pdo->commit();
-        } catch (Throwable $e) {
-            $pdo->rollBack();
-            throw $e;
-        }
 
-        return $visit;
+            return $visit;
+        });
     }
 }

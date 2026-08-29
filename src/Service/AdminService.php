@@ -7,7 +7,6 @@ namespace App\Service;
 use App\Infrastructure\Database;
 use App\Repository\ActivityLogRepository;
 use App\Repository\UserRepository;
-use Throwable;
 
 final class AdminService
 {
@@ -19,21 +18,13 @@ final class AdminService
 
     public function setUserActive(int $actorUserId, int $targetUserId, bool $active): void
     {
-        $pdo = Database::connection();
-        $pdo->beginTransaction();
-
-        try {
+        Database::runInTransaction(function () use ($actorUserId, $targetUserId, $active): void {
             $this->users->setActive($targetUserId, $active);
             $this->activityLog->record(
                 $actorUserId,
                 $active ? 'user_activated' : 'user_deactivated',
                 ['target_user_id' => $targetUserId],
             );
-
-            $pdo->commit();
-        } catch (Throwable $e) {
-            $pdo->rollBack();
-            throw $e;
-        }
+        });
     }
 }
