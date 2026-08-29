@@ -5,13 +5,16 @@ declare(strict_types=1);
 namespace App\Tests\Service;
 
 use App\Domain\AppointmentStatus;
+use App\Domain\DayOfWeek;
 use App\Domain\Owner;
 use App\Domain\Vet;
 use App\Infrastructure\Database;
 use App\Repository\AppointmentRepository;
+use App\Repository\AvailabilityExceptionRepository;
 use App\Repository\AvailabilityRepository;
 use App\Repository\PetRepository;
 use App\Service\AppointmentAvailabilityService;
+use App\Tests\Support\CreatesTestAvailability;
 use App\Tests\Support\CreatesTestUsers;
 use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
@@ -19,9 +22,11 @@ use PHPUnit\Framework\TestCase;
 final class AppointmentAvailabilityServiceTest extends TestCase
 {
     use CreatesTestUsers;
+    use CreatesTestAvailability;
 
     private AppointmentAvailabilityService $service;
     private AvailabilityRepository $availability;
+    private AvailabilityExceptionRepository $exceptions;
     private AppointmentRepository $appointments;
     private string $ownerEmail;
     private string $vetEmail;
@@ -39,8 +44,9 @@ final class AppointmentAvailabilityServiceTest extends TestCase
         $this->petId = (new PetRepository())->create($this->owner->id, 'Rex', 'Dog', null, null)->id;
 
         $this->availability = new AvailabilityRepository();
+        $this->exceptions = new AvailabilityExceptionRepository();
         $this->appointments = new AppointmentRepository();
-        $this->service = new AppointmentAvailabilityService($this->availability, $this->appointments);
+        $this->service = new AppointmentAvailabilityService($this->availability, $this->exceptions, $this->appointments);
     }
 
     protected function tearDown(): void
@@ -73,7 +79,7 @@ final class AppointmentAvailabilityServiceTest extends TestCase
     {
         //arrange
         $start = $this->instant('+2 weeks');
-        $this->availability->create($this->vet->id, $start, $start->modify('+90 minutes'));
+        $this->createAvailabilityWindow($this->vet->id, $start, $start->modify('+90 minutes'));
 
         //act
         $slots = $this->service->openSlots($this->vet->id, 30);
@@ -89,7 +95,7 @@ final class AppointmentAvailabilityServiceTest extends TestCase
     {
         //arrange
         $start = $this->instant('+2 weeks');
-        $this->availability->create($this->vet->id, $start, $start->modify('+100 minutes'));
+        $this->createAvailabilityWindow($this->vet->id, $start, $start->modify('+100 minutes'));
 
         //act
         $slots = $this->service->openSlots($this->vet->id, 30);
@@ -103,7 +109,7 @@ final class AppointmentAvailabilityServiceTest extends TestCase
     {
         //arrange
         $start = $this->instant('+2 weeks');
-        $this->availability->create($this->vet->id, $start, $start->modify('+90 minutes'));
+        $this->createAvailabilityWindow($this->vet->id, $start, $start->modify('+90 minutes'));
         $this->appointments->create($this->petId, $this->vet->id, $start->modify('+30 minutes'), null);
 
         //act
@@ -119,7 +125,7 @@ final class AppointmentAvailabilityServiceTest extends TestCase
     {
         //arrange
         $start = $this->instant('+2 weeks');
-        $this->availability->create($this->vet->id, $start, $start->modify('+90 minutes'));
+        $this->createAvailabilityWindow($this->vet->id, $start, $start->modify('+90 minutes'));
         $appointment = $this->appointments->create($this->petId, $this->vet->id, $start->modify('+30 minutes'), null);
         $this->appointments->updateStatus($appointment->id, AppointmentStatus::Cancelled);
 
@@ -136,7 +142,7 @@ final class AppointmentAvailabilityServiceTest extends TestCase
         $now = new DateTimeImmutable('now');
         $windowStart = $now->modify('-45 minutes');
         $windowEnd = $now->modify('+2 hours');
-        $this->availability->create($this->vet->id, $windowStart, $windowEnd);
+        $this->createAvailabilityWindow($this->vet->id, $windowStart, $windowEnd);
 
         //act
         $slots = $this->service->openSlots($this->vet->id, 30);
@@ -151,17 +157,17 @@ final class AppointmentAvailabilityServiceTest extends TestCase
 
     public function testOpenSlotsCapsAtMaximumSlotCount(): void
     {
-        //arrange
-        $start = $this->instant('+1 day');
-        $this->availability->create($this->vet->id, $start, $start->modify('+60 days'));
+        //arrange — wide-open recurring availability every day of the week, so
+        // the 60-day lookahead offers far more than 50 candidate slots
+        foreach (DayOfWeek::cases() as $day) {
+            $this->availability->create($this->vet->id, $day, new DateTimeImmutable('00:00'), new DateTimeImmutable('23:30'));
+        }
 
         //act
         $slots = $this->service->openSlots($this->vet->id, 30);
 
         //assert
         self::assertCount(50, $slots);
-        self::assertEquals($start, $slots[0]);
-        self::assertEquals($start->modify('+' . (49 * 30) . ' minutes'), $slots[49]);
     }
 
     public function testOpenSlotsIsScopedToRequestedVetOnly(): void
@@ -171,8 +177,8 @@ final class AppointmentAvailabilityServiceTest extends TestCase
         $otherVet = $this->registerVet($otherVetEmail);
 
         $start = $this->instant('+2 weeks');
-        $this->availability->create($this->vet->id, $start, $start->modify('+30 minutes'));
-        $this->availability->create($otherVet->id, $start->modify('+5 hours'), $start->modify('+5 hours 30 minutes'));
+        $this->createAvailabilityWindow($this->vet->id, $start, $start->modify('+30 minutes'));
+        $this->createAvailabilityWindow($otherVet->id, $start->modify('+5 hours'), $start->modify('+5 hours 30 minutes'));
 
         try {
             //act
@@ -192,7 +198,7 @@ final class AppointmentAvailabilityServiceTest extends TestCase
     {
         //arrange — a 2-hour window with a 60-minute booking starting mid-window
         $start = $this->instant('+2 weeks');
-        $this->availability->create($this->vet->id, $start, $start->modify('+2 hours'));
+        $this->createAvailabilityWindow($this->vet->id, $start, $start->modify('+2 hours'));
         $this->appointments->create($this->petId, $this->vet->id, $start->modify('+30 minutes'), null, 60);
 
         //act — request 30-minute slots
@@ -210,7 +216,7 @@ final class AppointmentAvailabilityServiceTest extends TestCase
     {
         //arrange — a 90-minute window
         $start = $this->instant('+2 weeks');
-        $this->availability->create($this->vet->id, $start, $start->modify('+90 minutes'));
+        $this->createAvailabilityWindow($this->vet->id, $start, $start->modify('+90 minutes'));
 
         //act — request 60-minute slots
         $slots = $this->service->openSlots($this->vet->id, 60);
@@ -226,10 +232,65 @@ final class AppointmentAvailabilityServiceTest extends TestCase
     {
         //arrange
         $start = $this->instant('+2 weeks');
-        $this->availability->create($this->vet->id, $start, $start->modify('+30 minutes'));
+        $this->createAvailabilityWindow($this->vet->id, $start, $start->modify('+30 minutes'));
 
         //act + assert
         self::assertTrue($this->service->isOfferedSlot($this->vet->id, $start, 30));
         self::assertFalse($this->service->isOfferedSlot($this->vet->id, $start->modify('+1 day'), 30));
+    }
+
+    public function testOpenSlotsExcludesDateBlockedByException(): void
+    {
+        //arrange — a weekly template that would normally offer slots every week
+        $start = $this->instant('+2 weeks');
+        $day = DayOfWeek::fromDate($start);
+        $this->availability->create($this->vet->id, $day, new DateTimeImmutable('09:00'), new DateTimeImmutable('11:00'));
+        $this->exceptions->create($this->vet->id, $start, false, null, null);
+
+        //act
+        $slots = $this->service->openSlots($this->vet->id, 30);
+
+        //assert — none of the offered slots fall on the blocked date, even
+        // though every other matching weekday within the lookahead does
+        $blockedDate = $start->format('Y-m-d');
+        foreach ($slots as $slot) {
+            self::assertNotSame($blockedDate, $slot->format('Y-m-d'));
+        }
+        self::assertNotEmpty($slots);
+    }
+
+    public function testOpenSlotsOffersCustomHoursExceptionOnDayWithNoTemplate(): void
+    {
+        //arrange — no weekly template at all, only a one-off exception
+        $start = $this->instant('+2 weeks');
+        $this->exceptions->create($this->vet->id, $start, true, $start, $start->modify('+60 minutes'));
+
+        //act
+        $slots = $this->service->openSlots($this->vet->id, 30);
+
+        //assert
+        self::assertCount(2, $slots);
+        self::assertEquals($start, $slots[0]);
+        self::assertEquals($start->modify('+30 minutes'), $slots[1]);
+    }
+
+    public function testOpenSlotsExceptionReplacesRatherThanAddsToTemplateHours(): void
+    {
+        //arrange — a weekly template offering 09:00-11:00, overridden on one
+        // specific date by a narrower custom-hours exception
+        $start = $this->instant('+2 weeks')->setTime(9, 0);
+        $day = DayOfWeek::fromDate($start);
+        $this->availability->create($this->vet->id, $day, new DateTimeImmutable('09:00'), new DateTimeImmutable('11:00'));
+        $exceptionStart = $start->setTime(14, 0);
+        $this->exceptions->create($this->vet->id, $start, true, $exceptionStart, $exceptionStart->modify('+30 minutes'));
+
+        //act
+        $slots = $this->service->openSlots($this->vet->id, 30);
+
+        //assert — only the exception's own hours are offered on that date;
+        // the template's normal 09:00-11:00 hours do not also appear
+        $onException = array_values(array_filter($slots, static fn (DateTimeImmutable $slot): bool => $slot->format('Y-m-d') === $start->format('Y-m-d')));
+        self::assertCount(1, $onException);
+        self::assertEquals($exceptionStart, $onException[0]);
     }
 }

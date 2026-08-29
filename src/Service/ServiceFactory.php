@@ -6,6 +6,7 @@ namespace App\Service;
 
 use App\Repository\ActivityLogRepository;
 use App\Repository\AppointmentRepository;
+use App\Repository\AvailabilityExceptionRepository;
 use App\Repository\AvailabilityRepository;
 use App\Repository\OwnerRepository;
 use App\Repository\PetRepository;
@@ -37,7 +38,11 @@ final class ServiceFactory
 
     public function appointmentAvailabilityService(): AppointmentAvailabilityService
     {
-        return new AppointmentAvailabilityService(new AvailabilityRepository(), new AppointmentRepository());
+        return new AppointmentAvailabilityService(
+            new AvailabilityRepository(),
+            new AvailabilityExceptionRepository(),
+            new AppointmentRepository(),
+        );
     }
 
     public function appointmentTransitionService(): AppointmentTransitionService

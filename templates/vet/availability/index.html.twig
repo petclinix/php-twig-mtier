@@ -3,15 +3,15 @@
 {% block title %}Availability — PetcliniX{% endblock %}
 
 {% block content %}
-    <h2>My Availability</h2>
+    <h2>My Weekly Availability</h2>
 
     {% if slots is empty %}
-        <p>No availability slots yet.</p>
+        <p>No recurring availability set yet.</p>
     {% else %}
         <ul>
             {% for slot in slots %}
                 <li>
-                    {{ slot.startsAt|date('Y-m-d H:i') }} – {{ slot.endsAt|date('H:i') }}
+                    {{ slot.dayOfWeek.value|capitalize }}: {{ slot.startsAt|date('H:i') }} – {{ slot.endsAt|date('H:i') }}
                     <form method="post" action="/vet/availability/{{ slot.id }}/delete" style="display:inline">
                         <button type="submit">Remove</button>
                     </form>
@@ -19,8 +19,6 @@
             {% endfor %}
         </ul>
     {% endif %}
-
-    <h3>Add Availability</h3>
 
     {% if errors is not empty %}
         <ul>
@@ -30,17 +28,77 @@
         </ul>
     {% endif %}
 
+    <h3>Add Weekly Availability</h3>
+
     <form method="post" action="/vet/availability">
         <label>
+            Day of week
+            <select name="day_of_week" required>
+                <option value="">Select a day</option>
+                {% for day in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] %}
+                    <option value="{{ day }}" {% if old.day_of_week|default('') == day %}selected{% endif %}>{{ day|capitalize }}</option>
+                {% endfor %}
+            </select>
+        </label>
+
+        <label>
             Starts at
-            <input type="datetime-local" name="starts_at" value="{{ old.starts_at|default('') }}" required>
+            <input type="time" name="starts_at" value="{{ old.starts_at|default('') }}" required>
         </label>
 
         <label>
             Ends at
-            <input type="datetime-local" name="ends_at" value="{{ old.ends_at|default('') }}" required>
+            <input type="time" name="ends_at" value="{{ old.ends_at|default('') }}" required>
         </label>
 
         <button type="submit">Add</button>
+    </form>
+
+    <h2>Exceptions</h2>
+
+    {% if exceptions is empty %}
+        <p>No exceptions set.</p>
+    {% else %}
+        <ul>
+            {% for exception in exceptions %}
+                <li>
+                    {{ exception.date|date('Y-m-d') }} —
+                    {% if exception.isAvailable %}
+                        Custom hours {{ exception.startsAt|date('H:i') }} – {{ exception.endsAt|date('H:i') }}
+                    {% else %}
+                        Unavailable (vacation/sick leave)
+                    {% endif %}
+                    <form method="post" action="/vet/availability/exceptions/{{ exception.id }}/delete" style="display:inline">
+                        <button type="submit">Remove</button>
+                    </form>
+                </li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <h3>Add Exception</h3>
+
+    <form method="post" action="/vet/availability/exceptions">
+        <label>
+            Date
+            <input type="date" name="exception_date" value="{{ old.exception_date|default('') }}" required>
+        </label>
+
+        <label>
+            <input type="checkbox" name="is_available" value="1" {% if old.is_available|default('') == '1' %}checked{% endif %}>
+            Custom hours instead of fully unavailable
+        </label>
+
+        <label>
+            Starts at (if custom hours)
+            <input type="time" name="exception_starts_at" value="{{ old.exception_starts_at|default('') }}">
+        </label>
+
+        <label>
+            Ends at (if custom hours)
+            <input type="time" name="exception_ends_at" value="{{ old.exception_ends_at|default('') }}">
+        </label>
+
+        <button type="submit">Add Exception</button>
     </form>
 {% endblock %}

@@ -5,19 +5,21 @@ declare(strict_types=1);
 namespace App\Repository;
 
 use App\Domain\Availability;
+use App\Domain\DayOfWeek;
 use App\Repository\Exception\AvailabilityPersistenceException;
 use DateTimeImmutable;
 
 final class AvailabilityRepository extends AbstractRepository
 {
-    public function create(int $vetId, DateTimeImmutable $startsAt, DateTimeImmutable $endsAt): Availability
+    public function create(int $vetId, DayOfWeek $dayOfWeek, DateTimeImmutable $startsAt, DateTimeImmutable $endsAt): Availability
     {
         $this->execute(
-            'INSERT INTO availability (vet_id, starts_at, ends_at) VALUES (:vet_id, :starts_at, :ends_at)',
+            'INSERT INTO availability (vet_id, day_of_week, starts_at, ends_at) VALUES (:vet_id, :day_of_week, :starts_at, :ends_at)',
             [
                 'vet_id' => $vetId,
-                'starts_at' => $startsAt->format('Y-m-d H:i:s'),
-                'ends_at' => $endsAt->format('Y-m-d H:i:s'),
+                'day_of_week' => $dayOfWeek->value,
+                'starts_at' => $startsAt->format('H:i:s'),
+                'ends_at' => $endsAt->format('H:i:s'),
             ],
         );
 
@@ -27,7 +29,7 @@ final class AvailabilityRepository extends AbstractRepository
     public function findById(int $id): ?Availability
     {
         return $this->fetchOne(
-            'SELECT id, vet_id, starts_at, ends_at FROM availability WHERE id = :id',
+            'SELECT id, vet_id, day_of_week, starts_at, ends_at FROM availability WHERE id = :id',
             ['id' => $id],
             $this->hydrate(...),
         );
@@ -39,7 +41,7 @@ final class AvailabilityRepository extends AbstractRepository
     public function findAllByVetId(int $vetId): array
     {
         return $this->fetchAll(
-            'SELECT id, vet_id, starts_at, ends_at FROM availability WHERE vet_id = :vet_id ORDER BY starts_at',
+            'SELECT id, vet_id, day_of_week, starts_at, ends_at FROM availability WHERE vet_id = :vet_id ORDER BY day_of_week, starts_at',
             ['vet_id' => $vetId],
             $this->hydrate(...),
         );
@@ -61,8 +63,9 @@ final class AvailabilityRepository extends AbstractRepository
         return new Availability(
             (int) $row['id'],
             (int) $row['vet_id'],
-            new DateTimeImmutable((string) $row['starts_at']),
-            new DateTimeImmutable((string) $row['ends_at']),
+            DayOfWeek::from((string) $row['day_of_week']),
+            DateTimeImmutable::createFromFormat('!H:i:s', (string) $row['starts_at']),
+            DateTimeImmutable::createFromFormat('!H:i:s', (string) $row['ends_at']),
         );
     }
 }

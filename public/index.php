@@ -56,6 +56,8 @@ $vetMiddleware = [AuthMiddleware::class, VetMiddleware::class];
 $router->get('/vet/availability', [VetAvailabilityController::class, 'index'], $vetMiddleware);
 $router->post('/vet/availability', [VetAvailabilityController::class, 'store'], $vetMiddleware);
 $router->post('/vet/availability/{id:\d+}/delete', [VetAvailabilityController::class, 'destroy'], $vetMiddleware);
+$router->post('/vet/availability/exceptions', [VetAvailabilityController::class, 'storeException'], $vetMiddleware);
+$router->post('/vet/availability/exceptions/{id:\d+}/delete', [VetAvailabilityController::class, 'destroyException'], $vetMiddleware);
 $router->get('/vet/appointments', [VetAppointmentController::class, 'index'], $vetMiddleware);
 $router->post('/vet/appointments/{id:\d+}/confirm', [VetAppointmentController::class, 'confirm'], $vetMiddleware);
 $router->post('/vet/appointments/{id:\d+}/cancel', [VetAppointmentController::class, 'cancel'], $vetMiddleware);

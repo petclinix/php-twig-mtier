@@ -10,8 +10,8 @@ use App\Domain\Vet;
 use App\Http\Controller\Owner\AppointmentController;
 use App\Infrastructure\Database;
 use App\Repository\AppointmentRepository;
-use App\Repository\AvailabilityRepository;
 use App\Repository\PetRepository;
+use App\Tests\Support\CreatesTestAvailability;
 use App\Tests\Support\CreatesTestUsers;
 use App\Tests\Support\HeaderSpy;
 use DateTimeImmutable;
@@ -22,6 +22,7 @@ use Twig\Loader\FilesystemLoader;
 final class AppointmentControllerTest extends TestCase
 {
     use CreatesTestUsers;
+    use CreatesTestAvailability;
 
     private AppointmentController $controller;
     private string $ownerEmail;
@@ -43,7 +44,7 @@ final class AppointmentControllerTest extends TestCase
         $this->vet = $this->registerVet($this->vetEmail);
         $this->petId = (new PetRepository())->create($this->owner->id, 'Rex', 'Dog', null, null)->id;
         $this->appointmentSlot = new DateTimeImmutable('+1 week');
-        (new AvailabilityRepository())->create($this->vet->id, $this->appointmentSlot, $this->appointmentSlot->modify('+2 hours'));
+        $this->createAvailabilityWindow($this->vet->id, $this->appointmentSlot, $this->appointmentSlot->modify('+2 hours'));
         $this->loginAs($this->owner->userId, 'owner');
         $this->controller = new AppointmentController(new Environment(new FilesystemLoader(__DIR__ . '/../../templates')));
     }

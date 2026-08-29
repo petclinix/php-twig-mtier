@@ -165,7 +165,7 @@ final class AuthenticatedRoutingTest extends TestCase
 
         //assert
         self::assertSame(200, $response->statusCode);
-        self::assertStringContainsString('My Availability', $response->body);
+        self::assertStringContainsString('My Weekly Availability', $response->body);
     }
 
     public function testNonVetIsRedirectedAwayFromVetRoute(): void

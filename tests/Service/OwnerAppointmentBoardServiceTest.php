@@ -8,11 +8,13 @@ use App\Domain\Owner;
 use App\Domain\Vet;
 use App\Infrastructure\Database;
 use App\Repository\AppointmentRepository;
+use App\Repository\AvailabilityExceptionRepository;
 use App\Repository\AvailabilityRepository;
 use App\Repository\PetRepository;
 use App\Repository\VetRepository;
 use App\Service\AppointmentAvailabilityService;
 use App\Service\OwnerAppointmentBoardService;
+use App\Tests\Support\CreatesTestAvailability;
 use App\Tests\Support\CreatesTestUsers;
 use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
@@ -20,9 +22,9 @@ use PHPUnit\Framework\TestCase;
 final class OwnerAppointmentBoardServiceTest extends TestCase
 {
     use CreatesTestUsers;
+    use CreatesTestAvailability;
 
     private OwnerAppointmentBoardService $service;
-    private AvailabilityRepository $availability;
     private string $ownerEmail;
     private string $vetEmail;
     private Owner $owner;
@@ -38,12 +40,11 @@ final class OwnerAppointmentBoardServiceTest extends TestCase
         $this->vet = $this->registerVet($this->vetEmail);
         $this->petId = (new PetRepository())->create($this->owner->id, 'Rex', 'Dog', null, null)->id;
 
-        $this->availability = new AvailabilityRepository();
         $this->service = new OwnerAppointmentBoardService(
             new PetRepository(),
             new VetRepository(),
             new AppointmentRepository(),
-            new AppointmentAvailabilityService($this->availability, new AppointmentRepository()),
+            new AppointmentAvailabilityService(new AvailabilityRepository(), new AvailabilityExceptionRepository(), new AppointmentRepository()),
         );
     }
 
@@ -74,7 +75,7 @@ final class OwnerAppointmentBoardServiceTest extends TestCase
     {
         //arrange
         $start = $this->instant('+2 weeks');
-        $this->availability->create($this->vet->id, $start, $start->modify('+30 minutes'));
+        $this->createAvailabilityWindow($this->vet->id, $start, $start->modify('+30 minutes'));
 
         //act
         $board = $this->service->forOwner($this->owner->id, $this->vet->id, 30);

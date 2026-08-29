@@ -42,9 +42,20 @@ CREATE TABLE pets (
 CREATE TABLE availability (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     vet_id INT UNSIGNED NOT NULL,
-    starts_at DATETIME NOT NULL,
-    ends_at DATETIME NOT NULL,
+    day_of_week ENUM('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday') NOT NULL,
+    starts_at TIME NOT NULL,
+    ends_at TIME NOT NULL,
     CONSTRAINT fk_availability_vet FOREIGN KEY (vet_id) REFERENCES vets (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE availability_exceptions (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    vet_id INT UNSIGNED NOT NULL,
+    exception_date DATE NOT NULL,
+    is_available BOOLEAN NOT NULL DEFAULT FALSE,
+    starts_at TIME NULL,
+    ends_at TIME NULL,
+    CONSTRAINT fk_availability_exceptions_vet FOREIGN KEY (vet_id) REFERENCES vets (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE appointments (

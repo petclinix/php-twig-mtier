@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Tests\Vet;
 
+use App\Domain\DayOfWeek;
 use App\Domain\Vet;
 use App\Http\Controller\Vet\AvailabilityController;
 use App\Infrastructure\Database;
+use App\Repository\AvailabilityExceptionRepository;
 use App\Repository\AvailabilityRepository;
 use App\Tests\Support\CreatesTestUsers;
 use App\Tests\Support\HeaderSpy;
@@ -52,20 +54,17 @@ final class AvailabilityControllerTest extends TestCase
         $output = $this->controller->index([]);
 
         //assert
-        self::assertStringContainsString('My Availability', $output);
-        self::assertStringContainsString('No availability slots yet.', $output);
+        self::assertStringContainsString('My Weekly Availability', $output);
+        self::assertStringContainsString('No recurring availability set yet.', $output);
     }
 
     public function testStoreWithValidDataCreatesSlotAndRedirects(): void
     {
         //arrange
-        $_POST = [
-            'starts_at' => (new DateTimeImmutable('+1 day 09:00'))->format('Y-m-d\TH:i'),
-            'ends_at' => (new DateTimeImmutable('+1 day 17:00'))->format('Y-m-d\TH:i'),
-        ];
+        $_POST = ['day_of_week' => 'monday', 'starts_at' => '09:00', 'ends_at' => '17:00'];
 
         //act
-        $output = $this->controller->store([]);
+        $output = $this->controller->store();
 
         //assert
         self::assertSame('', $output);
@@ -73,13 +72,26 @@ final class AvailabilityControllerTest extends TestCase
         self::assertCount(1, (new AvailabilityRepository())->findAllByVetId($this->vet->id));
     }
 
+    public function testStoreWithMissingDayShowsValidationError(): void
+    {
+        //arrange
+        $_POST = ['day_of_week' => '', 'starts_at' => '09:00', 'ends_at' => '17:00'];
+
+        //act
+        $output = $this->controller->store();
+
+        //assert
+        self::assertStringContainsString('Choose a day of the week.', $output);
+        self::assertSame([], HeaderSpy::$headers);
+    }
+
     public function testStoreWithMissingStartShowsValidationError(): void
     {
         //arrange
-        $_POST = ['starts_at' => '', 'ends_at' => (new DateTimeImmutable('+1 day 17:00'))->format('Y-m-d\TH:i')];
+        $_POST = ['day_of_week' => 'monday', 'starts_at' => '', 'ends_at' => '17:00'];
 
         //act
-        $output = $this->controller->store([]);
+        $output = $this->controller->store();
 
         //assert
         self::assertStringContainsString('Choose a start time.', $output);
@@ -89,10 +101,10 @@ final class AvailabilityControllerTest extends TestCase
     public function testStoreWithMissingEndShowsValidationError(): void
     {
         //arrange
-        $_POST = ['starts_at' => (new DateTimeImmutable('+1 day 09:00'))->format('Y-m-d\TH:i'), 'ends_at' => ''];
+        $_POST = ['day_of_week' => 'monday', 'starts_at' => '09:00', 'ends_at' => ''];
 
         //act
-        $output = $this->controller->store([]);
+        $output = $this->controller->store();
 
         //assert
         self::assertStringContainsString('Choose an end time.', $output);
@@ -102,13 +114,10 @@ final class AvailabilityControllerTest extends TestCase
     public function testStoreWithEndBeforeStartShowsValidationError(): void
     {
         //arrange
-        $_POST = [
-            'starts_at' => (new DateTimeImmutable('+1 day 17:00'))->format('Y-m-d\TH:i'),
-            'ends_at' => (new DateTimeImmutable('+1 day 09:00'))->format('Y-m-d\TH:i'),
-        ];
+        $_POST = ['day_of_week' => 'monday', 'starts_at' => '17:00', 'ends_at' => '09:00'];
 
         //act
-        $output = $this->controller->store([]);
+        $output = $this->controller->store();
 
         //assert
         self::assertStringContainsString('End time must be after the start time.', $output);
@@ -118,7 +127,7 @@ final class AvailabilityControllerTest extends TestCase
     public function testDestroyDeletesOwnSlot(): void
     {
         //arrange
-        $slot = (new AvailabilityRepository())->create($this->vet->id, new DateTimeImmutable('+1 day 09:00'), new DateTimeImmutable('+1 day 17:00'));
+        $slot = (new AvailabilityRepository())->create($this->vet->id, DayOfWeek::Monday, new DateTimeImmutable('09:00'), new DateTimeImmutable('17:00'));
 
         //act
         $output = $this->controller->destroy(['id' => (string) $slot->id]);
@@ -132,7 +141,7 @@ final class AvailabilityControllerTest extends TestCase
     public function testDestroyIsNoOpForAnotherVetsSlot(): void
     {
         //arrange
-        $slot = (new AvailabilityRepository())->create($this->otherVet->id, new DateTimeImmutable('+1 day 09:00'), new DateTimeImmutable('+1 day 17:00'));
+        $slot = (new AvailabilityRepository())->create($this->otherVet->id, DayOfWeek::Monday, new DateTimeImmutable('09:00'), new DateTimeImmutable('17:00'));
 
         //act
         $output = $this->controller->destroy(['id' => (string) $slot->id]);
@@ -141,5 +150,101 @@ final class AvailabilityControllerTest extends TestCase
         self::assertSame('', $output);
         self::assertSame('/vet/availability', HeaderSpy::location());
         self::assertNotNull((new AvailabilityRepository())->findById($slot->id));
+    }
+
+    public function testStoreExceptionCreatesBlockingException(): void
+    {
+        //arrange
+        $_POST = ['exception_date' => (new DateTimeImmutable('+1 week'))->format('Y-m-d')];
+
+        //act
+        $output = $this->controller->storeException();
+
+        //assert
+        self::assertSame('', $output);
+        self::assertSame('/vet/availability', HeaderSpy::location());
+        $exceptions = (new AvailabilityExceptionRepository())->findAllByVetId($this->vet->id);
+        self::assertCount(1, $exceptions);
+        self::assertFalse($exceptions[0]->isAvailable);
+    }
+
+    public function testStoreExceptionCreatesCustomHoursException(): void
+    {
+        //arrange
+        $_POST = [
+            'exception_date' => (new DateTimeImmutable('+1 week'))->format('Y-m-d'),
+            'is_available' => '1',
+            'exception_starts_at' => '10:00',
+            'exception_ends_at' => '14:00',
+        ];
+
+        //act
+        $output = $this->controller->storeException();
+
+        //assert
+        self::assertSame('', $output);
+        self::assertSame('/vet/availability', HeaderSpy::location());
+        $exceptions = (new AvailabilityExceptionRepository())->findAllByVetId($this->vet->id);
+        self::assertCount(1, $exceptions);
+        self::assertTrue($exceptions[0]->isAvailable);
+    }
+
+    public function testStoreExceptionWithMissingDateShowsValidationError(): void
+    {
+        //arrange
+        $_POST = ['exception_date' => ''];
+
+        //act
+        $output = $this->controller->storeException();
+
+        //assert
+        self::assertStringContainsString('Choose a date.', $output);
+        self::assertSame([], HeaderSpy::$headers);
+    }
+
+    public function testStoreExceptionWithCustomHoursMissingTimesShowsValidationError(): void
+    {
+        //arrange
+        $_POST = [
+            'exception_date' => (new DateTimeImmutable('+1 week'))->format('Y-m-d'),
+            'is_available' => '1',
+            'exception_starts_at' => '',
+            'exception_ends_at' => '',
+        ];
+
+        //act
+        $output = $this->controller->storeException();
+
+        //assert
+        self::assertStringContainsString('Choose a start time.', $output);
+        self::assertSame([], HeaderSpy::$headers);
+    }
+
+    public function testDestroyExceptionDeletesOwnException(): void
+    {
+        //arrange
+        $exception = (new AvailabilityExceptionRepository())->create($this->vet->id, new DateTimeImmutable('+1 week'), false, null, null);
+
+        //act
+        $output = $this->controller->destroyException(['id' => (string) $exception->id]);
+
+        //assert
+        self::assertSame('', $output);
+        self::assertSame('/vet/availability', HeaderSpy::location());
+        self::assertNull((new AvailabilityExceptionRepository())->findById($exception->id));
+    }
+
+    public function testDestroyExceptionIsNoOpForAnotherVetsException(): void
+    {
+        //arrange
+        $exception = (new AvailabilityExceptionRepository())->create($this->otherVet->id, new DateTimeImmutable('+1 week'), false, null, null);
+
+        //act
+        $output = $this->controller->destroyException(['id' => (string) $exception->id]);
+
+        //assert
+        self::assertSame('', $output);
+        self::assertSame('/vet/availability', HeaderSpy::location());
+        self::assertNotNull((new AvailabilityExceptionRepository())->findById($exception->id));
     }
 }

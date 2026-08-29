@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Vet;
 
 use App\Domain\AppointmentStatus;
+use App\Domain\DayOfWeek;
 use App\Domain\Owner;
 use App\Domain\Role;
 use App\Domain\Vet;
@@ -66,7 +67,7 @@ final class VetPortalTest extends TestCase
         $availabilityRepository = new AvailabilityRepository();
 
         //act
-        $availabilityRepository->create($this->vet->id, new DateTimeImmutable('+1 day 09:00'), new DateTimeImmutable('+1 day 17:00'));
+        $availabilityRepository->create($this->vet->id, DayOfWeek::Monday, new DateTimeImmutable('09:00'), new DateTimeImmutable('17:00'));
 
         //assert
         self::assertCount(1, $availabilityRepository->findAllByVetId($this->vet->id));
@@ -76,7 +77,7 @@ final class VetPortalTest extends TestCase
     {
         //arrange
         $availabilityRepository = new AvailabilityRepository();
-        $slot = $availabilityRepository->create($this->vet->id, new DateTimeImmutable('+1 day 09:00'), new DateTimeImmutable('+1 day 17:00'));
+        $slot = $availabilityRepository->create($this->vet->id, DayOfWeek::Monday, new DateTimeImmutable('09:00'), new DateTimeImmutable('17:00'));
 
         //act
         $availabilityRepository->delete($slot->id, $this->vet->id);
