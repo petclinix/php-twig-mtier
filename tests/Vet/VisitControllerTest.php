@@ -117,7 +117,7 @@ final class VisitControllerTest extends TestCase
     {
         //arrange
         $appointmentId = $this->createAppointment(AppointmentStatus::Confirmed);
-        $_POST = ['diagnosis' => 'Healthy', 'notes' => 'No concerns.'];
+        $_POST = ['diagnosis' => 'Healthy', 'vaccination' => 'Rabies booster', 'notes' => 'No concerns.'];
 
         //act
         $output = $this->controller->store(['id' => (string) $appointmentId]);
@@ -130,6 +130,7 @@ final class VisitControllerTest extends TestCase
         $visits = (new VisitRepository())->findAllByPetIds([$this->petId]);
         self::assertCount(1, $visits);
         self::assertSame('Healthy', $visits[0]->diagnosis);
+        self::assertSame('Rabies booster', $visits[0]->vaccination);
     }
 
     public function testStoreRedirectsWithoutRecordingVisitWhenAppointmentNotConfirmed(): void

@@ -18,6 +18,11 @@
         </label>
 
         <label>
+            Vaccination
+            <input type="text" name="vaccination" value="{{ old.vaccination|default('') }}">
+        </label>
+
+        <label>
             Notes
             <textarea name="notes">{{ old.notes|default('') }}</textarea>
         </label>

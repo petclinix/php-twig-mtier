@@ -128,7 +128,7 @@ final class VetPortalTest extends TestCase
         $visitService = new VisitService($appointmentRepository, new VisitRepository());
 
         //act
-        $visit = $visitService->recordVisit($confirmed, 'Healthy', 'No concerns.');
+        $visit = $visitService->recordVisit($confirmed, 'Healthy', 'Rabies booster', 'No concerns.');
 
         //assert
         self::assertSame('Healthy', $visit->diagnosis);

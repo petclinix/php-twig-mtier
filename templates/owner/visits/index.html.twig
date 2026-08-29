@@ -16,6 +16,7 @@
                     {{ petsById[appointment.petId].name }} with
                     Dr. {{ vetsById[appointment.vetId].lastName }}
                     {%- if visit.diagnosis %}: {{ visit.diagnosis }}{% endif %}
+                    {%- if visit.vaccination %} — Vaccination: {{ visit.vaccination }}{% endif %}
                     {%- if visit.notes %} ({{ visit.notes }}){% endif %}
                 </li>
             {% endfor %}

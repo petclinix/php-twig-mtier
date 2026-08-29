@@ -19,10 +19,10 @@ final class VisitService
     ) {
     }
 
-    public function recordVisit(Appointment $appointment, ?string $diagnosis, ?string $notes): Visit
+    public function recordVisit(Appointment $appointment, ?string $diagnosis, ?string $vaccination, ?string $notes): Visit
     {
-        return Database::runInTransaction(function () use ($appointment, $diagnosis, $notes): Visit {
-            $visit = $this->visits->create($appointment->id, $diagnosis, $notes);
+        return Database::runInTransaction(function () use ($appointment, $diagnosis, $vaccination, $notes): Visit {
+            $visit = $this->visits->create($appointment->id, $diagnosis, $vaccination, $notes);
             $this->appointments->updateStatus($appointment->id, AppointmentStatus::Completed);
 
             return $visit;

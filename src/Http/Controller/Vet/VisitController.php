@@ -55,10 +55,15 @@ final class VisitController
         }
 
         $diagnosis = trim((string) ($_POST['diagnosis'] ?? ''));
+        $vaccination = trim((string) ($_POST['vaccination'] ?? ''));
         $notes = trim((string) ($_POST['notes'] ?? ''));
 
-        $this->services->visitService()
-            ->recordVisit($appointment, $diagnosis !== '' ? $diagnosis : null, $notes !== '' ? $notes : null);
+        $this->services->visitService()->recordVisit(
+            $appointment,
+            $diagnosis !== '' ? $diagnosis : null,
+            $vaccination !== '' ? $vaccination : null,
+            $notes !== '' ? $notes : null,
+        );
 
         header('Location: /vet/appointments');
 

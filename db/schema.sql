@@ -82,6 +82,7 @@ CREATE TABLE visits (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     appointment_id INT UNSIGNED NOT NULL UNIQUE,
     diagnosis VARCHAR(255) NULL,
+    vaccination VARCHAR(255) NULL,
     notes TEXT NULL,
     recorded_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_visits_appointment FOREIGN KEY (appointment_id) REFERENCES appointments (id) ON DELETE CASCADE

@@ -71,7 +71,7 @@ final class OwnerVisitBoardServiceTest extends TestCase
     {
         //arrange
         $appointment = $this->appointments->create($this->petId, $this->vet->id, new DateTimeImmutable('+1 week'), null);
-        $this->visits->create($appointment->id, 'Healthy', null);
+        $this->visits->create($appointment->id, 'Healthy', null, null);
 
         //act
         $board = $this->service->forOwner($this->owner->id);

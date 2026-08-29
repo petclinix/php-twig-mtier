@@ -12,6 +12,7 @@ final readonly class Visit
         public int $id,
         public int $appointmentId,
         public ?string $diagnosis,
+        public ?string $vaccination,
         public ?string $notes,
         public DateTimeImmutable $recordedAt,
     ) {

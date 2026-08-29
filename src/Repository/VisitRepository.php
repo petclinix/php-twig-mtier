@@ -10,13 +10,14 @@ use DateTimeImmutable;
 
 final class VisitRepository extends AbstractRepository
 {
-    public function create(int $appointmentId, ?string $diagnosis, ?string $notes): Visit
+    public function create(int $appointmentId, ?string $diagnosis, ?string $vaccination, ?string $notes): Visit
     {
         $this->execute(
-            'INSERT INTO visits (appointment_id, diagnosis, notes) VALUES (:appointment_id, :diagnosis, :notes)',
+            'INSERT INTO visits (appointment_id, diagnosis, vaccination, notes) VALUES (:appointment_id, :diagnosis, :vaccination, :notes)',
             [
                 'appointment_id' => $appointmentId,
                 'diagnosis' => $diagnosis,
+                'vaccination' => $vaccination,
                 'notes' => $notes,
             ],
         );
@@ -27,7 +28,7 @@ final class VisitRepository extends AbstractRepository
     public function findById(int $id): ?Visit
     {
         return $this->fetchOne(
-            'SELECT id, appointment_id, diagnosis, notes, recorded_at FROM visits WHERE id = :id',
+            'SELECT id, appointment_id, diagnosis, vaccination, notes, recorded_at FROM visits WHERE id = :id',
             ['id' => $id],
             $this->hydrate(...),
         );
@@ -46,7 +47,7 @@ final class VisitRepository extends AbstractRepository
         $placeholders = implode(',', array_fill(0, count($petIds), '?'));
 
         return $this->fetchAll(
-            "SELECT v.id, v.appointment_id, v.diagnosis, v.notes, v.recorded_at
+            "SELECT v.id, v.appointment_id, v.diagnosis, v.vaccination, v.notes, v.recorded_at
              FROM visits v
              INNER JOIN appointments a ON a.id = v.appointment_id
              WHERE a.pet_id IN ($placeholders)
@@ -65,6 +66,7 @@ final class VisitRepository extends AbstractRepository
             (int) $row['id'],
             (int) $row['appointment_id'],
             $row['diagnosis'] !== null ? (string) $row['diagnosis'] : null,
+            $row['vaccination'] !== null ? (string) $row['vaccination'] : null,
             $row['notes'] !== null ? (string) $row['notes'] : null,
             new DateTimeImmutable((string) $row['recorded_at']),
         );
