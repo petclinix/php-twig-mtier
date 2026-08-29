@@ -16,7 +16,7 @@ jobs:
       - name: Install dependencies
         uses: php-actions/composer@v6
         with:
-          command: composer install --no-interaction --no-progress
+          args: --no-interaction --no-progress
       - name: PHPUnit tests
         uses: php-actions/phpunit@v4
         with:
