@@ -9,18 +9,55 @@ jobs:
   sonarqube:
     name: SonarQube
     runs-on: ubuntu-latest
+    services:
+      db:
+        image: mariadb:11
+        env:
+          MARIADB_DATABASE: petclinix
+          MARIADB_USER: petclinix
+          MARIADB_PASSWORD: petclinix
+          MARIADB_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=12
+          --health-start-period=30s
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: "3306"
+      DB_NAME: petclinix
+      DB_USER: petclinix
+      DB_PASSWORD: petclinix
     steps:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+
+      # Service containers start before checkout, so schema/seed can't be
+      # mounted as docker-entrypoint-initdb.d like docker-compose.yml does —
+      # load them explicitly once the repo and a healthy db are both present.
+      - name: Load database schema
+        run: |
+          mysql -h 127.0.0.1 -P 3306 -u root -proot petclinix < db/schema.sql
+          mysql -h 127.0.0.1 -P 3306 -u root -proot petclinix < db/seed.sql
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: pdo, pdo_mysql, fileinfo
+          coverage: pcov
+          tools: composer:v2
+
       - name: Install dependencies
-        uses: php-actions/composer@v6
-        with:
-          args: --no-interaction --no-progress
+        run: composer install --no-interaction --no-progress --prefer-dist
+
       - name: PHPUnit tests
-        uses: php-actions/phpunit@v4
-        with:
-          coverage_clover: "coverage/clover.xml"
+        run: vendor/bin/phpunit --coverage-clover coverage/clover.xml
+
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@7006c4492b2e0ee0f816d36501671557c97f5995 # v8.1.0
         env:
