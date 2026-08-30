@@ -1,0 +1,59 @@
+@startuml layer-dependencies
+
+title php-twig-mtier — Layer Dependencies\n(allowed --> and forbidden ..> red)
+
+skinparam packageStyle rectangle
+skinparam ArrowColor #555555
+skinparam PackageBorderColor #888888
+skinparam defaultFontSize 12
+
+package "Http\\Controller" #FAECE7 {
+  [Controllers]
+}
+
+package "Service" #FFF2D0 {
+  [ServiceFactory]
+  [Services]
+}
+
+package "Repository" #E1F5EE {
+  [Repositories]
+}
+
+package "Domain" #FFF8E8 {
+  [DomainObjects]
+}
+
+package "Infrastructure" #EEEDFE {
+  [Database]
+}
+
+' === allowed ===
+[Controllers]  --> [ServiceFactory] : builds services via
+[ServiceFactory] --> [Services]     : constructs
+[Controllers]  --> [Services]       : calls
+[Controllers]  --> [Repositories]   : calls directly for simple CRUD\n(allowed here — see Design Constraint #4)
+[Controllers]  --> [DomainObjects]  : renders
+[Services]     --> [Repositories]   : queries / persists
+[Services]     --> [DomainObjects]  : uses
+[Repositories] --> [DomainObjects]  : hydrates
+[Repositories] --> [Database]       : prepared statements
+[Services]     --> [Database]       : runInTransaction() only
+
+' === forbidden ===
+[Services]      .[#red].> [Controllers]   : FORBIDDEN
+[Repositories]  .[#red].> [Services]      : FORBIDDEN
+[DomainObjects] .[#red].> [Repositories]  : FORBIDDEN
+[DomainObjects] .[#red].> [Services]      : FORBIDDEN
+[DomainObjects] .[#red].> [Controllers]   : FORBIDDEN
+[Controllers]   .[#red].> [Database]      : FORBIDDEN\n(must go through a Repository)
+
+note bottom of [Controllers]
+  The one rule most different from the sister
+  Java implementation: **web → persistence is
+  allowed here**, deliberately, for the majority
+  of controllers that need no business logic
+  beyond a single repository call.
+end note
+
+@enduml

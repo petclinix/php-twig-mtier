@@ -1,0 +1,110 @@
+@startuml entity-model
+
+title PetcliniX (php-twig-mtier) — Entity Model\n(from db/schema.sql — plain SQL, no ORM/migration framework)
+
+skinparam defaultFontSize 12
+skinparam classAttributeIconSize 0
+hide circle
+hide methods
+
+class users #E1F5EE {
+  id : INT UNSIGNED <<PK>>
+  email : VARCHAR(190) <<unique>>
+  password_hash : VARCHAR(255)
+  role : ENUM('owner','vet','admin')
+  is_active : BOOLEAN = TRUE
+  created_at : DATETIME
+}
+
+class owners #FFF2D0 {
+  id : INT UNSIGNED <<PK>>
+  user_id : INT UNSIGNED <<FK, unique>>
+  first_name : VARCHAR(100)
+  last_name : VARCHAR(100)
+  phone : VARCHAR(30)
+  address : VARCHAR(255)
+}
+
+class vets #FFF2D0 {
+  id : INT UNSIGNED <<PK>>
+  user_id : INT UNSIGNED <<FK, unique>>
+  first_name : VARCHAR(100)
+  last_name : VARCHAR(100)
+  specialty : VARCHAR(100)
+}
+
+class pets #FAECE7 {
+  id : INT UNSIGNED <<PK>>
+  owner_id : INT UNSIGNED <<FK>>
+  name : VARCHAR(100)
+  species : VARCHAR(50)
+  breed : VARCHAR(100) <<nullable>>
+  birth_date : DATE <<nullable>>
+  photo_url : VARCHAR(255) <<nullable>>
+}
+
+class availability #E4F0FB {
+  id : INT UNSIGNED <<PK>>
+  vet_id : INT UNSIGNED <<FK>>
+  day_of_week : ENUM('monday'..'sunday')
+  starts_at : TIME
+  ends_at : TIME
+}
+
+class availability_exceptions #E4F0FB {
+  id : INT UNSIGNED <<PK>>
+  vet_id : INT UNSIGNED <<FK>>
+  exception_date : DATE
+  is_available : BOOLEAN = FALSE
+  starts_at : TIME <<nullable>>
+  ends_at : TIME <<nullable>>
+}
+
+class appointments #FDE7E7 {
+  id : INT UNSIGNED <<PK>>
+  pet_id : INT UNSIGNED <<FK>>
+  vet_id : INT UNSIGNED <<FK>>
+  scheduled_at : DATETIME
+  duration_minutes : INT UNSIGNED = 30
+  status : ENUM('requested','confirmed','cancelled','completed','no_show')
+  reason : VARCHAR(255) <<nullable>>
+  created_at : DATETIME
+  active_scheduled_at : DATETIME <<generated, unique w/ vet_id>>
+}
+
+class visits #FDE7E7 {
+  id : INT UNSIGNED <<PK>>
+  appointment_id : INT UNSIGNED <<FK, unique>>
+  diagnosis : VARCHAR(255) <<nullable>>
+  vaccination : VARCHAR(255) <<nullable>>
+  notes : TEXT <<nullable>>
+  recorded_at : DATETIME
+}
+
+class activity_log #EEEDFE {
+  id : INT UNSIGNED <<PK>>
+  user_id : INT UNSIGNED <<FK, nullable>>
+  action : VARCHAR(100)
+  context : JSON <<nullable>>
+  created_at : DATETIME
+}
+
+users     "1" -- "0..1" owners           : user_id\n(ON DELETE CASCADE)
+users     "1" -- "0..1" vets             : user_id\n(ON DELETE CASCADE)
+owners    "1" -- "*"    pets             : owner_id\n(ON DELETE CASCADE)
+vets      "1" -- "*"    availability     : vet_id\n(ON DELETE CASCADE)
+vets      "1" -- "*"    availability_exceptions : vet_id\n(ON DELETE CASCADE)
+pets      "1" -- "*"    appointments     : pet_id\n(ON DELETE CASCADE)
+vets      "1" -- "*"    appointments     : vet_id\n(ON DELETE CASCADE)
+appointments "1" -- "0..1" visits        : appointment_id\n(ON DELETE CASCADE)
+users     "1" -- "*"    activity_log     : user_id\n(ON DELETE SET NULL)
+
+note bottom of appointments
+  active_scheduled_at is a STORED GENERATED column:
+  scheduled_at when status IN ('requested','confirmed'),
+  else NULL. Paired with UNIQUE(vet_id, active_scheduled_at)
+  this is the DB-level double-booking guard — see
+  architecture-internals.md §1 and sequence-book-appointment.svg.
+end note
+
+@enduml

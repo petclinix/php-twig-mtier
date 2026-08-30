@@ -1,0 +1,54 @@
+@startuml c4-layer-architecture
+
+title PetcliniX (php-twig-mtier) — Layer Architecture
+
+skinparam componentStyle rectangle
+skinparam defaultFontSize 12
+skinparam ArrowColor #555555
+skinparam PackageBorderColor #888888
+
+actor Client
+database "MariaDB" as db
+
+package "Http\\Controller  |  HTTP Boundary" #FAECE7 {
+  [Router]
+  [Middleware\n(Auth/Owner/Vet/Admin)]
+  [Controllers]
+  [Validation\n(ErrorBag / Input / Validate)]
+}
+
+package "Service  |  Business Logic" #FFF2D0 {
+  [ServiceFactory]
+  [Services]
+}
+
+package "Repository  |  Persistence" #E1F5EE {
+  [Repositories]
+}
+
+package "Domain  |  Shared Centre\n(zero outbound dependencies)" #FFF8E8 {
+  [Value Objects & Enums]
+}
+
+package "Infrastructure" #EEEDFE {
+  [Database\n(connection + transactions)]
+}
+
+Client -down-> [Router] : HTTP request
+[Router] -down-> [Middleware\n(Auth/Owner/Vet/Admin)] : role gate
+[Middleware\n(Auth/Owner/Vet/Admin)] -down-> [Controllers] : forwards
+[Controllers] --> [Validation\n(ErrorBag / Input / Validate)] : validates $_POST/$_GET/$_FILES
+
+[Controllers] -down-> [ServiceFactory] : builds a service via
+[ServiceFactory] --> [Services] : constructs
+[Controllers] -down-> [Repositories] : calls directly\n(simple CRUD — no service needed)
+[Services] -down-> [Repositories] : queries / persists
+
+[Controllers] .down.> [Value Objects & Enums] : renders to Twig
+[Services] .down.> [Value Objects & Enums] : uses
+[Repositories] .down.> [Value Objects & Enums] : hydrates
+
+[Repositories] -down-> [Database\n(connection + transactions)] : prepared statements
+[Database\n(connection + transactions)] -down-> db : SQL / PDO
+
+@enduml

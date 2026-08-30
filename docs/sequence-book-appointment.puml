@@ -1,0 +1,73 @@
+@startuml sequence-book-appointment
+
+title PetcliniX (php-twig-mtier) — Book an Appointment\n(happy path + both concurrency-safety layers — see architecture-internals.md §1)
+
+skinparam defaultFontSize 12
+skinparam SequenceMessageAlign center
+
+actor Owner
+participant "Owner\\AppointmentController" as Controller
+participant "AppointmentAvailabilityService" as AvailSvc
+participant "AppointmentRepository" as Repo
+database "MariaDB" as DB
+
+Owner -> Controller : POST /owner/appointments\n(pet, vet, scheduled_at, duration, reason)
+activate Controller
+
+Controller -> Controller : validate input (ErrorBag)
+
+Controller -> AvailSvc : isOfferedSlot(vetId, scheduledAt, duration)
+activate AvailSvc
+AvailSvc -> DB : check availability + availability_exceptions
+AvailSvc --> Controller : bool
+deactivate AvailSvc
+
+alt slot not offered (fast pre-check fails)
+  Controller --> Owner : re-render form\n"That time is no longer available."
+else slot appears offered — proceed to authoritative check
+  Controller -> Repo : create(petId, vetId, scheduledAt, reason, duration)
+  activate Repo
+
+  Repo -> DB : BEGIN TRANSACTION
+  Repo -> DB : SELECT id FROM vets WHERE id = :vet_id FOR UPDATE
+  note right of DB
+    serializes all concurrent booking
+    attempts for this vet
+  end note
+
+  Repo -> Repo : hasOverlap(vetId, start, end)
+  Repo -> DB : SELECT ... WHERE vet_id = :vet_id\n  AND scheduled_at < :end\n  AND scheduled_at + duration > :start
+
+  alt overlap found (authoritative check catches what the pre-check missed)
+    Repo -> DB : ROLLBACK
+    Repo --> Controller : throw AppointmentSlotUnavailableException
+    deactivate Repo
+    Controller --> Owner : re-render form\n"That time is no longer available."
+  else no overlap
+    Repo -> DB : INSERT INTO appointments (...)
+    note right of DB
+      UNIQUE(vet_id, active_scheduled_at)
+      is a free backstop even if the
+      overlap logic above were ever
+      bypassed by a bug
+    end note
+
+    alt duplicate-key error anyway (backstop trips)
+      DB --> Repo : PDOException (23000)
+      Repo -> DB : ROLLBACK
+      Repo --> Controller : throw AppointmentSlotUnavailableException
+      deactivate Repo
+      Controller --> Owner : re-render form\n"That time is no longer available."
+    else insert succeeds
+      DB --> Repo : new appointment id
+      Repo -> DB : COMMIT
+      Repo --> Controller : Appointment
+      deactivate Repo
+      Controller --> Owner : redirect to appointment list\n"Appointment requested."
+    end
+  end
+end
+
+deactivate Controller
+
+@enduml

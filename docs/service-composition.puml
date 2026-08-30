@@ -1,0 +1,120 @@
+@startuml service-composition
+
+title PetcliniX (php-twig-mtier) — Service Layer Composition\nSolid = via ServiceFactory   |   Dashed blue = direct repository call (no Service needed)
+
+skinparam defaultFontSize 12
+skinparam componentStyle rectangle
+skinparam ArrowColor #555555
+
+package "Controllers (Http\\Controller)" #FAECE7 {
+  [AuthController]
+  [Admin\\ActivityController]
+  [Admin\\StatsController]
+  [Admin\\UserController]
+  [DashboardController]
+  [Owner\\AppointmentController]
+  [Owner\\PetController]
+  [Owner\\VisitController]
+  [Vet\\AppointmentController]
+  [Vet\\AvailabilityController]
+  [Vet\\VisitController]
+}
+
+package "Services (via ServiceFactory)" #FFF2D0 {
+  [authService]
+  [adminService]
+  [activityLogService]
+  [appointmentAvailabilityService]
+  [appointmentTransitionService]
+  [ownerAppointmentBoardService]
+  [ownerVisitBoardService]
+  [vetAppointmentBoardService]
+  [visitService]
+  [petPhotoUploadService]
+}
+
+package "Repositories" #E1F5EE {
+  database UserRepository
+  database OwnerRepository
+  database VetRepository
+  database PetRepository
+  database AppointmentRepository
+  database VisitRepository
+  database AvailabilityRepository
+  database AvailabilityExceptionRepository
+  database ActivityLogRepository
+  database StatsRepository
+}
+
+' ── Controller → Service (via ServiceFactory) ──────────────────────────
+[AuthController]                --> [authService]
+[Admin\\ActivityController]     --> [activityLogService]
+[Admin\\UserController]         --> [adminService]
+[Owner\\AppointmentController]  --> [appointmentAvailabilityService]
+[Owner\\AppointmentController]  --> [appointmentTransitionService]
+[Owner\\AppointmentController]  --> [ownerAppointmentBoardService]
+[Owner\\PetController]          --> [petPhotoUploadService]
+[Owner\\VisitController]        --> [ownerVisitBoardService]
+[Vet\\AppointmentController]    --> [appointmentTransitionService]
+[Vet\\AppointmentController]    --> [vetAppointmentBoardService]
+[Vet\\VisitController]          --> [visitService]
+
+' ── Controller → Repository directly (no Service needed) ──────────────
+[Admin\\StatsController]        ..[#2A6099]..> StatsRepository
+[Admin\\UserController]         ..[#2A6099]..> UserRepository
+[DashboardController]           ..[#2A6099]..> UserRepository
+[Owner\\AppointmentController]  ..[#2A6099]..> AppointmentRepository
+[Owner\\AppointmentController]  ..[#2A6099]..> PetRepository
+[Owner\\AppointmentController]  ..[#2A6099]..> VetRepository
+[Owner\\PetController]          ..[#2A6099]..> PetRepository
+[Owner\\PetController]          ..[#2A6099]..> VisitRepository
+[Vet\\AvailabilityController]   ..[#2A6099]..> AvailabilityRepository
+[Vet\\AvailabilityController]   ..[#2A6099]..> AvailabilityExceptionRepository
+[Vet\\VisitController]          ..[#2A6099]..> AppointmentRepository
+[Vet\\VisitController]          ..[#2A6099]..> PetRepository
+
+' ── Service → Repository wiring ────────────────────────────────────────
+[authService]                     --> UserRepository
+[authService]                     --> OwnerRepository
+[authService]                     --> VetRepository
+[authService]                     --> ActivityLogRepository
+
+[adminService]                    --> UserRepository
+[adminService]                    --> ActivityLogRepository
+
+[activityLogService]              --> ActivityLogRepository
+[activityLogService]              --> UserRepository
+
+[appointmentAvailabilityService]  --> AvailabilityRepository
+[appointmentAvailabilityService]  --> AvailabilityExceptionRepository
+[appointmentAvailabilityService]  --> AppointmentRepository
+
+[appointmentTransitionService]    --> AppointmentRepository
+[appointmentTransitionService]    --> PetRepository
+
+[ownerAppointmentBoardService]    --> PetRepository
+[ownerAppointmentBoardService]    --> VetRepository
+[ownerAppointmentBoardService]    --> AppointmentRepository
+[ownerAppointmentBoardService]    --> [appointmentAvailabilityService] : reuses\n(nested)
+
+[ownerVisitBoardService]          --> PetRepository
+[ownerVisitBoardService]          --> VetRepository
+[ownerVisitBoardService]          --> AppointmentRepository
+[ownerVisitBoardService]          --> VisitRepository
+
+[vetAppointmentBoardService]      --> AppointmentRepository
+[vetAppointmentBoardService]      --> PetRepository
+[vetAppointmentBoardService]      --> OwnerRepository
+
+[visitService]                    --> AppointmentRepository
+[visitService]                    --> VisitRepository
+
+note bottom of [petPhotoUploadService]
+  No repository — writes to the
+  filesystem (public/uploads/pets/)
+  and stores only the URL, via
+  whichever Repository::create()
+  call the caller makes separately.
+end note
+
+@enduml
