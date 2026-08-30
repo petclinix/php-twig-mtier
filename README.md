@@ -188,6 +188,21 @@ not an oversight — see the PetcliniX site's implementation-comparison table.
 docker compose exec php vendor/bin/phpunit
 ```
 
+## Quality Tooling
+
+- `composer run-script cs-check` / `cs-fix` — php-cs-fixer, PER-CS2x0 base.
+- `composer run-script phpstan` — level 8 static analysis over `src/`
+  (`phpstan-baseline.neon` ignores a handful of pre-existing issues; all new
+  code is still checked at level 8).
+- `composer run-script deptrac` — validates only Design Constraint #1's
+  dependency-direction graph (Domain/Infrastructure depend on nothing;
+  Repository → Domain+Infrastructure; Service → Domain+Repository+Infrastructure;
+  Controller → Domain+Repository+Service+supporting HTTP pieces). Design
+  Constraints 2–7 are not dependency-graph rules and are **not** checked by any
+  tool here — they remain enforced by code review.
+- `composer run-script lint` runs all three (non-mutating); CI runs the same
+  three checks on every push/PR via the `lint` job.
+
 ## What Is Intentionally Not Here
 
 - **No ORM** — the headline paradigm choice; see "The no ORM trade-off" above.

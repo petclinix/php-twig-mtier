@@ -8,6 +8,11 @@
 /coverage/
 .phpunit.cache/
 
+## Static analysis / formatting caches
+.phpstan-cache/
+.php-cs-fixer.cache
+.deptrac.cache
+
 ## User uploads
 /public/uploads/
 

@@ -1,0 +1,79 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Call to an undefined method object\:\:handle\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Http/Router/Router.php
+
+		-
+			message: '#^Method App\\Repository\\AbstractRepository\:\:fetchAll\(\) should return list\<T\> but returns array\<T\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Repository/AbstractRepository.php
+
+		-
+			message: '#^Method App\\Repository\\ActivityLogRepository\:\:findRecent\(\) should return list\<App\\Domain\\ActivityLogEntry\> but returns array\<App\\Domain\\ActivityLogEntry\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Repository/ActivityLogRepository.php
+
+		-
+			message: '#^Parameter \#5 \$startsAt of class App\\Domain\\AvailabilityException constructor expects DateTimeImmutable\|null, DateTimeImmutable\|false\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Repository/AvailabilityExceptionRepository.php
+
+		-
+			message: '#^Parameter \#6 \$endsAt of class App\\Domain\\AvailabilityException constructor expects DateTimeImmutable\|null, DateTimeImmutable\|false\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Repository/AvailabilityExceptionRepository.php
+
+		-
+			message: '#^Parameter \#4 \$startsAt of class App\\Domain\\Availability constructor expects DateTimeImmutable, DateTimeImmutable\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Repository/AvailabilityRepository.php
+
+		-
+			message: '#^Parameter \#5 \$endsAt of class App\\Domain\\Availability constructor expects DateTimeImmutable, DateTimeImmutable\|false given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Repository/AvailabilityRepository.php
+
+		-
+			message: '#^Cannot call method fetchAll\(\) on PDOStatement\|false\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Repository/StatsRepository.php
+
+		-
+			message: '#^Cannot call method fetchColumn\(\) on PDOStatement\|false\.$#'
+			identifier: method.nonObject
+			count: 4
+			path: src/Repository/StatsRepository.php
+
+		-
+			message: '#^Method App\\Service\\OwnerAppointmentBoardService\:\:forOwner\(\) should return array\{pets\: list\<App\\Domain\\Pet\>, vets\: list\<App\\Domain\\Vet\>, appointments\: list\<App\\Domain\\Appointment\>, petsById\: array\<int, App\\Domain\\Pet\>, vetsById\: array\<int, App\\Domain\\Vet\>, slotOptions\: list\<array\{value\: string, label\: string\}\>\} but returns array\{pets\: list\<App\\Domain\\Pet\>, vets\: list\<App\\Domain\\Vet\>, appointments\: list\<App\\Domain\\Appointment\>, petsById\: array\<int, object\>, vetsById\: array\<int, object\>, slotOptions\: list\<array\{value\: non\-falsy\-string, label\: non\-falsy\-string\}\>\}\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Service/OwnerAppointmentBoardService.php
+
+		-
+			message: '#^Method App\\Service\\OwnerVisitBoardService\:\:forOwner\(\) should return array\{visits\: list\<App\\Domain\\Visit\>, appointmentsById\: array\<int, App\\Domain\\Appointment\>, petsById\: array\<int, App\\Domain\\Pet\>, vetsById\: array\<int, App\\Domain\\Vet\>\} but returns array\{visits\: list\<App\\Domain\\Visit\>, appointmentsById\: array\<int, object\>, petsById\: array\<int, object\>, vetsById\: array\<int, object\>\}\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Service/OwnerVisitBoardService.php
+
+		-
+			message: '#^Offset ''size'' might not exist on array\{tmp_name\?\: string, error\: 0, size\?\: int\}\.$#'
+			identifier: offsetAccess.notFound
+			count: 1
+			path: src/Service/PetPhotoUploadService.php
+
+		-
+			message: '#^Offset ''tmp_name'' might not exist on array\{tmp_name\?\: string, error\: 0, size\: int\<min, 5242880\>\}\.$#'
+			identifier: offsetAccess.notFound
+			count: 2
+			path: src/Service/PetPhotoUploadService.php

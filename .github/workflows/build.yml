@@ -6,8 +6,32 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 jobs:
-  sonarqube:
-    name: SonarQube
+  lint:
+    name: Static Analysis & Style
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Code style (php-cs-fixer)
+        run: composer run-script cs-check
+
+      - name: Static analysis (phpstan)
+        run: composer run-script phpstan
+
+      - name: Architecture boundaries (deptrac)
+        run: composer run-script deptrac
+
+  test:
+    name: Build & Test
     runs-on: ubuntu-latest
     services:
       db:
@@ -58,6 +82,10 @@ jobs:
       - name: PHPUnit tests
         run: vendor/bin/phpunit --coverage-clover coverage/clover.xml
 
+  sonarqube:
+    name: SonarQube
+    runs-on: ubuntu-latest
+    steps:
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@7006c4492b2e0ee0f816d36501671557c97f5995 # v8.1.0
         env:
