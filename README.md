@@ -176,6 +176,16 @@ What it costs:
 This is a deliberate portfolio contrast point with `java-springboot-react-mtier`,
 not an oversight — see the PetcliniX site's implementation-comparison table.
 
+## What Is Intentionally Not Here
+
+- **No ORM** — the headline paradigm choice; see "The no ORM trade-off" above.
+- **No DI container** — services are wired by hand in `ServiceFactory`; see
+  Design Constraint #5.
+- **No request/response DTOs** — Domain objects render straight to Twig; there is
+  no API here to serialize a separate response shape for.
+- **No centralized `retrieve*`-throws convention** — see Code Conventions #1.
+- **No migration framework** — `db/schema.sql` is plain, forward-only SQL.
+
 ## Testing
 
 - **Controller tests** — `tests/{Http,Owner,Vet,Admin}/*ControllerTest.php`.
@@ -229,16 +239,6 @@ database, and skipping it avoids fighting over the host's `3306` port with
 any other project's db container. If the full stack is already running
 (`docker compose up`), `docker compose exec php composer run-script cs-fix`
 works too.
-
-## What Is Intentionally Not Here
-
-- **No ORM** — the headline paradigm choice; see "The no ORM trade-off" above.
-- **No DI container** — services are wired by hand in `ServiceFactory`; see
-  Design Constraint #5.
-- **No request/response DTOs** — Domain objects render straight to Twig; there is
-  no API here to serialize a separate response shape for.
-- **No centralized `retrieve*`-throws convention** — see Code Conventions #1.
-- **No migration framework** — `db/schema.sql` is plain, forward-only SQL.
 
 ## Quickstart
 
