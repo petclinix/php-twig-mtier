@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Tests\Http\Router;
 
 use App\Http\Router\Router;
+use App\Http\TwigFactory;
 use App\Tests\Support\Router\BlockingMiddleware;
 use App\Tests\Support\Router\FakeController;
 use App\Tests\Support\Router\MiddlewareCallLog;
 use App\Tests\Support\Router\PassingMiddleware;
 use PHPUnit\Framework\TestCase;
 use Twig\Environment;
-use Twig\Loader\FilesystemLoader;
 
 final class RouterTest extends TestCase
 {
@@ -19,7 +19,7 @@ final class RouterTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->twig = new Environment(new FilesystemLoader(__DIR__ . '/../../../templates'));
+        $this->twig = TwigFactory::create();
         MiddlewareCallLog::reset();
     }
 

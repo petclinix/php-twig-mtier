@@ -20,6 +20,7 @@
                     {% if appointment.status.value in ['requested', 'confirmed'] %}
                         <a href="/owner/appointments/{{ appointment.id }}/reschedule">Reschedule</a>
                         <form method="post" action="/owner/appointments/{{ appointment.id }}/cancel" style="display:inline">
+                            <input type="hidden" name="_token" value="{{ csrf_token() }}">
                             <button type="submit">Cancel</button>
                         </form>
                     {% endif %}
@@ -67,6 +68,7 @@
                 <p>Dr. {{ vetsById[selectedVetId].lastName }} has no open times right now. Try another vet.</p>
             {% else %}
                 <form method="post" action="/owner/appointments">
+                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="vet_id" value="{{ selectedVetId }}">
                     <input type="hidden" name="duration_minutes" value="{{ selectedDuration }}">
 

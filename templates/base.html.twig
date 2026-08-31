@@ -13,6 +13,7 @@
             {% if current_user_role %}
                 <a href="/dashboard">Dashboard</a>
                 <form method="post" action="/logout" style="display:inline">
+                    <input type="hidden" name="_token" value="{{ csrf_token() }}">
                     <button type="submit">Log out</button>
                 </form>
             {% else %}

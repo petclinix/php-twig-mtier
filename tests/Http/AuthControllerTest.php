@@ -6,12 +6,11 @@ namespace App\Tests\Http;
 
 use App\Http\Controller\AuthController;
 use App\Http\Session;
+use App\Http\TwigFactory;
 use App\Infrastructure\Database;
 use App\Repository\UserRepository;
 use App\Tests\Support\HeaderSpy;
 use PHPUnit\Framework\TestCase;
-use Twig\Environment;
-use Twig\Loader\FilesystemLoader;
 
 final class AuthControllerTest extends TestCase
 {
@@ -27,7 +26,7 @@ final class AuthControllerTest extends TestCase
         HeaderSpy::reset();
         $_POST = [];
         $this->email = sprintf('auth-ctrl-%s@example.test', bin2hex(random_bytes(6)));
-        $this->controller = new AuthController(new Environment(new FilesystemLoader(__DIR__ . '/../../templates')));
+        $this->controller = new AuthController(TwigFactory::create());
     }
 
     protected function tearDown(): void

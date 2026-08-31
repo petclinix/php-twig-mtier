@@ -13,6 +13,7 @@
                 <li>
                     {{ slot.dayOfWeek.value|capitalize }}: {{ slot.startsAt|date('H:i') }} – {{ slot.endsAt|date('H:i') }}
                     <form method="post" action="/vet/availability/{{ slot.id }}/delete" style="display:inline">
+                        <input type="hidden" name="_token" value="{{ csrf_token() }}">
                         <button type="submit">Remove</button>
                     </form>
                 </li>
@@ -31,6 +32,7 @@
     <h3>Add Weekly Availability</h3>
 
     <form method="post" action="/vet/availability">
+        <input type="hidden" name="_token" value="{{ csrf_token() }}">
         <label>
             Day of week
             <select name="day_of_week" required>
@@ -69,6 +71,7 @@
                         Unavailable (vacation/sick leave)
                     {% endif %}
                     <form method="post" action="/vet/availability/exceptions/{{ exception.id }}/delete" style="display:inline">
+                        <input type="hidden" name="_token" value="{{ csrf_token() }}">
                         <button type="submit">Remove</button>
                     </form>
                 </li>
@@ -79,6 +82,7 @@
     <h3>Add Exception</h3>
 
     <form method="post" action="/vet/availability/exceptions">
+        <input type="hidden" name="_token" value="{{ csrf_token() }}">
         <label>
             Date
             <input type="date" name="exception_date" value="{{ old.exception_date|default('') }}" required>

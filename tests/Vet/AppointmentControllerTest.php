@@ -8,6 +8,7 @@ use App\Domain\AppointmentStatus;
 use App\Domain\Owner;
 use App\Domain\Vet;
 use App\Http\Controller\Vet\AppointmentController;
+use App\Http\TwigFactory;
 use App\Infrastructure\Database;
 use App\Repository\AppointmentRepository;
 use App\Repository\PetRepository;
@@ -15,8 +16,6 @@ use App\Tests\Support\CreatesTestUsers;
 use App\Tests\Support\HeaderSpy;
 use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
-use Twig\Environment;
-use Twig\Loader\FilesystemLoader;
 
 final class AppointmentControllerTest extends TestCase
 {
@@ -43,7 +42,7 @@ final class AppointmentControllerTest extends TestCase
         $this->otherVet = $this->registerVet($this->otherVetEmail);
         $this->petId = (new PetRepository())->create($this->owner->id, 'Rex', 'Dog', null, null)->id;
         $this->loginAs($this->vet->userId, 'vet');
-        $this->controller = new AppointmentController(new Environment(new FilesystemLoader(__DIR__ . '/../../templates')));
+        $this->controller = new AppointmentController(TwigFactory::create());
     }
 
     protected function tearDown(): void

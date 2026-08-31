@@ -12,6 +12,7 @@
     </p>
 
     <form method="post" action="/vet/appointments/{{ appointment.id }}/visit">
+        <input type="hidden" name="_token" value="{{ csrf_token() }}">
         <label>
             Diagnosis
             <input type="text" name="diagnosis" value="{{ old.diagnosis|default('') }}">

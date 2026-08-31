@@ -61,37 +61,52 @@ final class AuthenticatedRoutingTest extends TestCase
             ->execute(['owner' => $this->ownerEmail, 'vet' => $this->vetEmail, 'admin' => $this->adminEmail]);
     }
 
+    private function fetchLoginPageTokenAndCookie(): array
+    {
+        $page = self::$server->request('GET', '/login');
+        $cookie = $page->sessionCookie();
+        self::assertNotNull($cookie, 'Expected a PHPSESSID cookie from GET /login.');
+
+        preg_match('/name="_token" value="([^"]+)"/', $page->body, $matches);
+        self::assertArrayHasKey(1, $matches, 'Expected a hidden _token field on the login form.');
+
+        return [$cookie, $matches[1]];
+    }
+
     private function loginAs(string $email): string
     {
+        [$cookie, $token] = $this->fetchLoginPageTokenAndCookie();
+
         $response = self::$server->request(
             'POST',
             '/login',
-            [],
-            http_build_query(['email' => $email, 'password' => self::PASSWORD]),
+            ['Cookie' => $cookie],
+            http_build_query(['email' => $email, 'password' => self::PASSWORD, '_token' => $token]),
         );
 
-        $cookie = $response->sessionCookie();
-        self::assertNotNull($cookie, "Expected a PHPSESSID cookie from logging in as {$email}.");
+        $loggedInCookie = $response->sessionCookie();
 
-        return $cookie;
+        return $loggedInCookie ?? $cookie;
     }
 
     public function testLoginThenDashboardRunsFullRouterMiddlewareControllerChain(): void
     {
+        //arrange
+        [$cookie, $token] = $this->fetchLoginPageTokenAndCookie();
+
         //act
         $loginResponse = self::$server->request(
             'POST',
             '/login',
-            [],
-            http_build_query(['email' => $this->ownerEmail, 'password' => self::PASSWORD]),
+            ['Cookie' => $cookie],
+            http_build_query(['email' => $this->ownerEmail, 'password' => self::PASSWORD, '_token' => $token]),
         );
 
         //assert
         self::assertSame(302, $loginResponse->statusCode);
         self::assertSame('/dashboard', $loginResponse->headers['location'] ?? null);
 
-        $cookie = $loginResponse->sessionCookie();
-        self::assertNotNull($cookie);
+        $cookie = $loginResponse->sessionCookie() ?? $cookie;
 
         //act
         $dashboard = self::$server->request('GET', '/dashboard', ['Cookie' => $cookie]);

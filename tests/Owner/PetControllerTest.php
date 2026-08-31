@@ -6,6 +6,7 @@ namespace App\Tests\Owner;
 
 use App\Domain\Owner;
 use App\Http\Controller\Owner\PetController;
+use App\Http\TwigFactory;
 use App\Infrastructure\Database;
 use App\Repository\AppointmentRepository;
 use App\Repository\PetRepository;
@@ -13,8 +14,6 @@ use App\Tests\Support\CreatesTestUsers;
 use App\Tests\Support\HeaderSpy;
 use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
-use Twig\Environment;
-use Twig\Loader\FilesystemLoader;
 
 final class PetControllerTest extends TestCase
 {
@@ -32,7 +31,7 @@ final class PetControllerTest extends TestCase
         $this->ownerEmail = sprintf('pet-ctrl-%s@example.test', bin2hex(random_bytes(6)));
         $this->owner = $this->registerOwner($this->ownerEmail);
         $this->loginAs($this->owner->userId, 'owner');
-        $this->controller = new PetController(new Environment(new FilesystemLoader(__DIR__ . '/../../templates')));
+        $this->controller = new PetController(TwigFactory::create());
     }
 
     protected function tearDown(): void

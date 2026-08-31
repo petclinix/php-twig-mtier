@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace App\Tests\Http;
 
 use App\Http\Controller\DashboardController;
+use App\Http\TwigFactory;
 use App\Tests\Support\CreatesTestUsers;
 use PHPUnit\Framework\TestCase;
-use Twig\Environment;
-use Twig\Loader\FilesystemLoader;
 
 final class DashboardControllerTest extends TestCase
 {
@@ -21,7 +20,7 @@ final class DashboardControllerTest extends TestCase
     {
         $_SESSION = [];
         $this->email = sprintf('dashboard-ctrl-%s@example.test', bin2hex(random_bytes(6)));
-        $this->controller = new DashboardController(new Environment(new FilesystemLoader(__DIR__ . '/../../templates')));
+        $this->controller = new DashboardController(TwigFactory::create());
     }
 
     protected function tearDown(): void

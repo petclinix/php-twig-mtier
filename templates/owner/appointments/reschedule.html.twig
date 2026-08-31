@@ -31,6 +31,7 @@
         <p>No open times right now for this duration. Try another duration.</p>
     {% else %}
         <form method="post" action="/owner/appointments/{{ appointment.id }}/reschedule">
+            <input type="hidden" name="_token" value="{{ csrf_token() }}">
             <input type="hidden" name="duration_minutes" value="{{ selectedDuration }}">
 
             <label>
@@ -53,6 +54,7 @@
     {% endif %}
 
     <form method="post" action="/owner/appointments/{{ appointment.id }}/cancel">
+        <input type="hidden" name="_token" value="{{ csrf_token() }}">
         <button type="submit">Cancel Appointment Instead</button>
     </form>
 {% endblock %}

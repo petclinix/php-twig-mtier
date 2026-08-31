@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace App\Tests\Admin;
 
 use App\Http\Controller\Admin\ActivityController;
+use App\Http\TwigFactory;
 use App\Infrastructure\Database;
 use App\Tests\Support\CreatesTestUsers;
 use PHPUnit\Framework\TestCase;
-use Twig\Environment;
-use Twig\Loader\FilesystemLoader;
 
 final class ActivityControllerTest extends TestCase
 {
@@ -21,7 +20,7 @@ final class ActivityControllerTest extends TestCase
     protected function setUp(): void
     {
         $this->email = sprintf('activity-ctrl-%s@example.test', bin2hex(random_bytes(6)));
-        $this->controller = new ActivityController(new Environment(new FilesystemLoader(__DIR__ . '/../../templates')));
+        $this->controller = new ActivityController(TwigFactory::create());
     }
 
     protected function tearDown(): void

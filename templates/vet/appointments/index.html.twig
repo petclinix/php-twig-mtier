@@ -20,17 +20,21 @@
 
                     {% if appointment.status.value == 'requested' %}
                         <form method="post" action="/vet/appointments/{{ appointment.id }}/confirm" style="display:inline">
+                            <input type="hidden" name="_token" value="{{ csrf_token() }}">
                             <button type="submit">Confirm</button>
                         </form>
                         <form method="post" action="/vet/appointments/{{ appointment.id }}/cancel" style="display:inline">
+                            <input type="hidden" name="_token" value="{{ csrf_token() }}">
                             <button type="submit">Cancel</button>
                         </form>
                     {% elseif appointment.status.value == 'confirmed' %}
                         <a href="/vet/appointments/{{ appointment.id }}/visit">Record Visit</a>
                         <form method="post" action="/vet/appointments/{{ appointment.id }}/cancel" style="display:inline">
+                            <input type="hidden" name="_token" value="{{ csrf_token() }}">
                             <button type="submit">Cancel</button>
                         </form>
                         <form method="post" action="/vet/appointments/{{ appointment.id }}/no-show" style="display:inline">
+                            <input type="hidden" name="_token" value="{{ csrf_token() }}">
                             <button type="submit">Mark No-Show</button>
                         </form>
                     {% endif %}

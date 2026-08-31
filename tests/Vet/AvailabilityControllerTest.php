@@ -7,6 +7,7 @@ namespace App\Tests\Vet;
 use App\Domain\DayOfWeek;
 use App\Domain\Vet;
 use App\Http\Controller\Vet\AvailabilityController;
+use App\Http\TwigFactory;
 use App\Infrastructure\Database;
 use App\Repository\AvailabilityExceptionRepository;
 use App\Repository\AvailabilityRepository;
@@ -14,8 +15,6 @@ use App\Tests\Support\CreatesTestUsers;
 use App\Tests\Support\HeaderSpy;
 use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
-use Twig\Environment;
-use Twig\Loader\FilesystemLoader;
 
 final class AvailabilityControllerTest extends TestCase
 {
@@ -37,7 +36,7 @@ final class AvailabilityControllerTest extends TestCase
         $this->vet = $this->registerVet($this->vetEmail);
         $this->otherVet = $this->registerVet($this->otherVetEmail);
         $this->loginAs($this->vet->userId, 'vet');
-        $this->controller = new AvailabilityController(new Environment(new FilesystemLoader(__DIR__ . '/../../templates')));
+        $this->controller = new AvailabilityController(TwigFactory::create());
     }
 
     protected function tearDown(): void

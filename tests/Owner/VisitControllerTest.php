@@ -7,14 +7,13 @@ namespace App\Tests\Owner;
 use App\Domain\Owner;
 use App\Domain\Vet;
 use App\Http\Controller\Owner\VisitController;
+use App\Http\TwigFactory;
 use App\Infrastructure\Database;
 use App\Repository\AppointmentRepository;
 use App\Repository\PetRepository;
 use App\Tests\Support\CreatesTestUsers;
 use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
-use Twig\Environment;
-use Twig\Loader\FilesystemLoader;
 
 final class VisitControllerTest extends TestCase
 {
@@ -34,7 +33,7 @@ final class VisitControllerTest extends TestCase
         $this->owner = $this->registerOwner($this->ownerEmail);
         $this->vet = $this->registerVet($this->vetEmail);
         $this->loginAs($this->owner->userId, 'owner');
-        $this->controller = new VisitController(new Environment(new FilesystemLoader(__DIR__ . '/../../templates')));
+        $this->controller = new VisitController(TwigFactory::create());
     }
 
     protected function tearDown(): void

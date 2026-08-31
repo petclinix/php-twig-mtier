@@ -5,16 +5,15 @@ declare(strict_types=1);
 namespace App\Tests\Http;
 
 use App\Http\Controller\HomeController;
+use App\Http\TwigFactory;
 use PHPUnit\Framework\TestCase;
-use Twig\Environment;
-use Twig\Loader\FilesystemLoader;
 
 final class HomeControllerTest extends TestCase
 {
     public function testIndexRendersHomeTemplate(): void
     {
         //arrange
-        $twig = new Environment(new FilesystemLoader(__DIR__ . '/../../templates'));
+        $twig = TwigFactory::create();
         $controller = new HomeController($twig);
 
         //act

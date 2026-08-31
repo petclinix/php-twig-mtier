@@ -6,13 +6,12 @@ namespace App\Tests\Admin;
 
 use App\Domain\User;
 use App\Http\Controller\Admin\UserController;
+use App\Http\TwigFactory;
 use App\Infrastructure\Database;
 use App\Repository\UserRepository;
 use App\Tests\Support\CreatesTestUsers;
 use App\Tests\Support\HeaderSpy;
 use PHPUnit\Framework\TestCase;
-use Twig\Environment;
-use Twig\Loader\FilesystemLoader;
 
 final class UserControllerTest extends TestCase
 {
@@ -33,7 +32,7 @@ final class UserControllerTest extends TestCase
         $this->actor = $this->createAdminUser($this->actorEmail);
         $this->target = $this->createAdminUser($this->targetEmail);
         $this->loginAs($this->actor->id, 'admin');
-        $this->controller = new UserController(new Environment(new FilesystemLoader(__DIR__ . '/../../templates')));
+        $this->controller = new UserController(TwigFactory::create());
     }
 
     protected function tearDown(): void
