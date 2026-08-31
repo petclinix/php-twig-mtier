@@ -7,6 +7,9 @@ project deliberately has neither — would normally decide for you; see
 [java-springboot-react-mtier](https://github.com/petclinix/java-springboot-react-mtier)
 for the paradigm that makes those choices instead.
 
+See [`architecture.md`](architecture.md) for the full layer/constraint/convention
+reference these sections explain the reasoning behind.
+
 ---
 
 ## 1. Concurrency-Safe Booking: Why a Unique Constraint Alone Isn't Enough
