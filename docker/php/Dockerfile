@@ -38,6 +38,23 @@ COPY . .
 CMD ["php-fpm"]
 
 # ---------------------------------------------------------------------------
+# devcontainer: testing stage + Xdebug for IDE step-debugging (IntelliJ/
+# PhpStorm Dev Containers). Never used by CI or plain `docker compose up` —
+# only .devcontainer/docker-compose.extend.yml points a build at this target.
+# Same $PHPIZE_DEPS install/purge hygiene as the testing stage's own pcov
+# build, since testing already purged the toolchain after compiling pcov.
+# ---------------------------------------------------------------------------
+FROM testing AS devcontainer
+
+RUN apt-get update && apt-get install -y --no-install-recommends $PHPIZE_DEPS \
+    && pecl install xdebug \
+    && docker-php-ext-enable xdebug \
+    && apt-get purge -y --auto-remove $PHPIZE_DEPS \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY docker/php/xdebug.ini $PHP_INI_DIR/conf.d/99-xdebug.ini
+
+# ---------------------------------------------------------------------------
 # prod: --no-dev only, and only the runtime source directories — no tests/,
 # no phpunit.xml, no dev tooling. Last stage, so it's the default `docker
 # build` target: forgetting --target never silently produces the bloated

@@ -1,0 +1,14 @@
+{
+  "name": "php-twig-mtier",
+  "dockerComposeFile": ["../docker-compose.yml", "docker-compose.extend.yml"],
+  "service": "php",
+  "workspaceFolder": "/var/www",
+  "shutdownAction": "none",
+  "forwardPorts": [8080, 3306, 9003],
+  "postCreateCommand": "composer install",
+  "customizations": {
+    "jetbrains": {
+      "backend": "PhpStorm"
+    }
+  }
+}

@@ -1,0 +1,6 @@
+services:
+  php:
+    build:
+      target: devcontainer
+    ports:
+      - "9003:9003"
