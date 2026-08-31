@@ -137,7 +137,7 @@ final class AppointmentRepositoryTest extends TestCase
         $stmt = $connectionA->prepare(
             "SELECT COUNT(*) FROM appointments
              WHERE vet_id = :vet_id AND status IN ('requested', 'confirmed')
-               AND scheduled_at < :end AND scheduled_at + INTERVAL duration_minutes MINUTE > :start"
+               AND scheduled_at < :end AND scheduled_at + INTERVAL duration_minutes MINUTE > :start",
         );
         $stmt->execute([
             'vet_id' => $this->vet->id,

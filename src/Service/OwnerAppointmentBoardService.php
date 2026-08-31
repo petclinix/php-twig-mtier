@@ -21,8 +21,7 @@ final class OwnerAppointmentBoardService
         private readonly VetRepository $vets,
         private readonly AppointmentRepository $appointments,
         private readonly AppointmentAvailabilityService $availability,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{
@@ -45,7 +44,7 @@ final class OwnerAppointmentBoardService
         $slotOptions = [];
         if ($selectedVetId > 0 && isset($vetsById[$selectedVetId])) {
             $slotOptions = array_map(
-                static fn (DateTimeImmutable $slot): array => [
+                static fn(DateTimeImmutable $slot): array => [
                     'value' => $slot->format(self::SLOT_FORMAT),
                     'label' => $slot->format('Y-m-d H:i'),
                 ],

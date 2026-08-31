@@ -20,8 +20,7 @@ final class OwnerVisitBoardService
         private readonly VetRepository $vets,
         private readonly AppointmentRepository $appointments,
         private readonly VisitRepository $visits,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{

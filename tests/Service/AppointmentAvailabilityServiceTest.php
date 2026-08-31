@@ -289,7 +289,7 @@ final class AppointmentAvailabilityServiceTest extends TestCase
 
         //assert — only the exception's own hours are offered on that date;
         // the template's normal 09:00-11:00 hours do not also appear
-        $onException = array_values(array_filter($slots, static fn (DateTimeImmutable $slot): bool => $slot->format('Y-m-d') === $start->format('Y-m-d')));
+        $onException = array_values(array_filter($slots, static fn(DateTimeImmutable $slot): bool => $slot->format('Y-m-d') === $start->format('Y-m-d')));
         self::assertCount(1, $onException);
         self::assertEquals($exceptionStart, $onException[0]);
     }

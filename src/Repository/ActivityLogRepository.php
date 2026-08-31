@@ -33,7 +33,7 @@ final class ActivityLogRepository extends AbstractRepository
         // LIMIT needs an explicit PDO::PARAM_INT bind, which the generic
         // execute()/fetchAll() helpers don't support, so this stays hand-rolled.
         $stmt = $this->pdo->prepare(
-            'SELECT id, user_id, action, context, created_at FROM activity_log ORDER BY created_at DESC, id DESC LIMIT :limit'
+            'SELECT id, user_id, action, context, created_at FROM activity_log ORDER BY created_at DESC, id DESC LIMIT :limit',
         );
         $stmt->bindValue('limit', $limit, PDO::PARAM_INT);
         $stmt->execute();

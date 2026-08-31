@@ -203,6 +203,33 @@ docker compose exec php vendor/bin/phpunit
 - `composer run-script lint` runs all three (non-mutating); CI runs the same
   three checks on every push/PR via the `lint` job.
 
+### Running php-cs-fixer with Docker
+
+```
+./composer.sh run-script cs-check   # check only, no changes written — what CI runs
+./composer.sh run-script cs-fix     # apply fixes in place
+```
+
+`phpstan` and `deptrac` follow the same pattern:
+
+```
+./composer.sh run-script phpstan
+./composer.sh run-script deptrac
+./composer.sh run-script lint       # all three, non-mutating
+```
+
+Under the hood `composer.sh` is just:
+
+```
+docker compose run --rm --no-deps php composer "$@"
+```
+
+`--no-deps` skips starting the `db` service — none of these tools touch the
+database, and skipping it avoids fighting over the host's `3306` port with
+any other project's db container. If the full stack is already running
+(`docker compose up`), `docker compose exec php composer run-script cs-fix`
+works too.
+
 ## What Is Intentionally Not Here
 
 - **No ORM** — the headline paradigm choice; see "The no ORM trade-off" above.

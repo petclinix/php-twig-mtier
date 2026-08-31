@@ -15,6 +15,5 @@ final readonly class Visit
         public ?string $vaccination,
         public ?string $notes,
         public DateTimeImmutable $recordedAt,
-    ) {
-    }
+    ) {}
 }

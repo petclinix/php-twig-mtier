@@ -19,8 +19,7 @@ final class AppointmentTransitionService
     public function __construct(
         private readonly AppointmentRepository $appointments,
         private readonly PetRepository $pets,
-    ) {
-    }
+    ) {}
 
     /**
      * @param list<AppointmentStatus> $allowedFrom

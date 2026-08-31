@@ -15,8 +15,7 @@ final class AppointmentController
     public function __construct(
         private readonly Environment $twig,
         private readonly ServiceFactory $services = new ServiceFactory(),
-    ) {
-    }
+    ) {}
 
     public function index(): string
     {

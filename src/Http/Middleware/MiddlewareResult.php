@@ -9,8 +9,7 @@ final class MiddlewareResult
     private function __construct(
         public readonly bool $continue,
         public readonly ?int $statusCode = null,
-    ) {
-    }
+    ) {}
 
     public static function pass(): self
     {

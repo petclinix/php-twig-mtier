@@ -17,6 +17,5 @@ final readonly class Appointment
         public AppointmentStatus $status,
         public ?string $reason,
         public DateTimeImmutable $createdAt,
-    ) {
-    }
+    ) {}
 }

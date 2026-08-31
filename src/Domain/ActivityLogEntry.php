@@ -17,6 +17,5 @@ final readonly class ActivityLogEntry
         public string $action,
         public ?array $context,
         public DateTimeImmutable $createdAt,
-    ) {
-    }
+    ) {}
 }

@@ -117,7 +117,7 @@ final class AppointmentRepository extends AbstractRepository
         $stmt = $this->pdo->prepare(
             "SELECT COUNT(*) FROM appointments
              WHERE vet_id = :vet_id AND status IN ('requested', 'confirmed')
-               AND scheduled_at < :end AND scheduled_at + INTERVAL duration_minutes MINUTE > :start"
+               AND scheduled_at < :end AND scheduled_at + INTERVAL duration_minutes MINUTE > :start",
         );
         $stmt->execute([
             'vet_id' => $vetId,

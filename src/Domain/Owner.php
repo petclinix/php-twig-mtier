@@ -13,6 +13,5 @@ final readonly class Owner
         public string $lastName,
         public string $phone,
         public string $address,
-    ) {
-    }
+    ) {}
 }

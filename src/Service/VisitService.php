@@ -16,8 +16,7 @@ final class VisitService
     public function __construct(
         private readonly AppointmentRepository $appointments,
         private readonly VisitRepository $visits,
-    ) {
-    }
+    ) {}
 
     public function recordVisit(Appointment $appointment, ?string $diagnosis, ?string $vaccination, ?string $notes): Visit
     {

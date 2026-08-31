@@ -10,9 +10,7 @@ use Twig\Environment;
 
 final class DashboardController
 {
-    public function __construct(private readonly Environment $twig)
-    {
-    }
+    public function __construct(private readonly Environment $twig) {}
 
     public function index(): string
     {

@@ -14,6 +14,5 @@ final readonly class Availability
         public DayOfWeek $dayOfWeek,
         public DateTimeImmutable $startsAt,
         public DateTimeImmutable $endsAt,
-    ) {
-    }
+    ) {}
 }

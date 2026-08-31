@@ -64,7 +64,7 @@ final class ActivityLogServiceTest extends TestCase
         //assert
         self::assertCount(1, array_filter(
             $board['usersById'],
-            fn (int $id): bool => $id === $this->owner->userId,
+            fn(int $id): bool => $id === $this->owner->userId,
             ARRAY_FILTER_USE_KEY,
         ));
     }

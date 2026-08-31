@@ -12,6 +12,5 @@ final readonly class Vet
         public string $firstName,
         public string $lastName,
         public string $specialty,
-    ) {
-    }
+    ) {}
 }

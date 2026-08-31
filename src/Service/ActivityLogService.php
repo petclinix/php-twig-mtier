@@ -14,8 +14,7 @@ final class ActivityLogService
     public function __construct(
         private readonly ActivityLogRepository $activityLog,
         private readonly UserRepository $users,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{entries: list<ActivityLogEntry>, usersById: array<int, User>}

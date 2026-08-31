@@ -23,8 +23,7 @@ final class PetPhotoUploadService
     public function __construct(
         private readonly string $uploadDir = __DIR__ . '/../../public/uploads/pets',
         private readonly mixed $move = 'move_uploaded_file',
-    ) {
-    }
+    ) {}
 
     /**
      * @param array{tmp_name?: string, error?: int, size?: int}|null $file

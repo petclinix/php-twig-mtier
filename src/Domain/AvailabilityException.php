@@ -15,6 +15,5 @@ final readonly class AvailabilityException
         public bool $isAvailable,
         public ?DateTimeImmutable $startsAt,
         public ?DateTimeImmutable $endsAt,
-    ) {
-    }
+    ) {}
 }

@@ -15,6 +15,5 @@ final readonly class User
         public Role $role,
         public bool $isActive,
         public DateTimeImmutable $createdAt,
-    ) {
-    }
+    ) {}
 }

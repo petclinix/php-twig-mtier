@@ -13,8 +13,7 @@ final class AdminService
     public function __construct(
         private readonly UserRepository $users,
         private readonly ActivityLogRepository $activityLog,
-    ) {
-    }
+    ) {}
 
     public function setUserActive(int $actorUserId, int $targetUserId, bool $active): void
     {

@@ -7,9 +7,10 @@ namespace App\Http\Router;
 use App\Http\Middleware\Middleware;
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
-use Twig\Environment;
 
 use function FastRoute\simpleDispatcher;
+
+use Twig\Environment;
 
 final class Router
 {

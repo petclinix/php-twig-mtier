@@ -31,8 +31,7 @@ final class AppointmentController
     public function __construct(
         private readonly Environment $twig,
         private readonly ServiceFactory $services = new ServiceFactory(),
-    ) {
-    }
+    ) {}
 
     public function index(): string
     {
@@ -197,7 +196,7 @@ final class AppointmentController
             : self::DEFAULT_DURATION_MINUTES;
 
         $slotOptions = array_map(
-            static fn (DateTimeImmutable $slot): array => [
+            static fn(DateTimeImmutable $slot): array => [
                 'value' => $slot->format(self::SLOT_FORMAT),
                 'label' => $slot->format('Y-m-d H:i'),
             ],

@@ -20,8 +20,7 @@ final class AuthService
         private readonly OwnerRepository $owners,
         private readonly VetRepository $vets,
         private readonly ActivityLogRepository $activityLog,
-    ) {
-    }
+    ) {}
 
     /**
      * @param array<string, string> $profile

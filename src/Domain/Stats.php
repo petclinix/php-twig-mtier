@@ -16,6 +16,5 @@ final readonly class Stats
         public int $appointmentCount,
         public array $appointmentsByStatus,
         public int $visitCount,
-    ) {
-    }
+    ) {}
 }

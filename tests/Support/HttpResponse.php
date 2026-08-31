@@ -11,8 +11,7 @@ final class HttpResponse
         public readonly int $statusCode,
         public readonly array $headers,
         public readonly string $body,
-    ) {
-    }
+    ) {}
 
     /** @param list<string> $rawHeaders */
     public static function fromRaw(array $rawHeaders, string $body): self

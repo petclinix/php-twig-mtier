@@ -8,9 +8,7 @@ use Twig\Environment;
 
 final class FakeController
 {
-    public function __construct(private readonly Environment $twig)
-    {
-    }
+    public function __construct(private readonly Environment $twig) {}
 
     /**
      * @param array<string, string> $vars

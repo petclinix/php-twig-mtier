@@ -8,9 +8,7 @@ use Twig\Environment;
 
 final class HomeController
 {
-    public function __construct(private readonly Environment $twig)
-    {
-    }
+    public function __construct(private readonly Environment $twig) {}
 
     public function index(): string
     {

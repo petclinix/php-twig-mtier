@@ -20,9 +20,7 @@ final class AvailabilityController
     private const TIME_FORMAT = 'H:i';
     private const DATE_FORMAT = 'Y-m-d';
 
-    public function __construct(private readonly Environment $twig)
-    {
-    }
+    public function __construct(private readonly Environment $twig) {}
 
     public function index(): string
     {

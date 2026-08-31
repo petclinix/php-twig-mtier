@@ -17,8 +17,7 @@ final class VetAppointmentBoardService
         private readonly AppointmentRepository $appointments,
         private readonly PetRepository $pets,
         private readonly OwnerRepository $owners,
-    ) {
-    }
+    ) {}
 
     /**
      * @return array{

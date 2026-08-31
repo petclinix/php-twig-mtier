@@ -18,8 +18,7 @@ final class VisitController
     public function __construct(
         private readonly Environment $twig,
         private readonly ServiceFactory $services = new ServiceFactory(),
-    ) {
-    }
+    ) {}
 
     /**
      * @param array<string, string> $vars

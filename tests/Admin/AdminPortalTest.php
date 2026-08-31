@@ -97,7 +97,7 @@ final class AdminPortalTest extends TestCase
         $entries = $this->activityLog->findRecent(50);
 
         //assert
-        $actions = array_map(static fn ($entry) => $entry->action, $entries);
+        $actions = array_map(static fn($entry) => $entry->action, $entries);
         self::assertContains('user_deactivated', $actions);
         self::assertContains('user_activated', $actions);
         self::assertContains('user_registered', $actions);

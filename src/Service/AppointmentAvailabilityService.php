@@ -27,8 +27,7 @@ final class AppointmentAvailabilityService
         private readonly AvailabilityRepository $availability,
         private readonly AvailabilityExceptionRepository $exceptions,
         private readonly AppointmentRepository $appointments,
-    ) {
-    }
+    ) {}
 
     /**
      * @return list<DateTimeImmutable>
@@ -40,7 +39,7 @@ final class AppointmentAvailabilityService
 
         /** @var list<array{0: DateTimeImmutable, 1: DateTimeImmutable}> $booked */
         $booked = array_map(
-            static fn (Appointment $appointment): array => [
+            static fn(Appointment $appointment): array => [
                 $appointment->scheduledAt,
                 $appointment->scheduledAt->modify('+' . $appointment->durationMinutes . ' minutes'),
             ],
@@ -123,7 +122,7 @@ final class AppointmentAvailabilityService
         $templates = $templatesByDay[DayOfWeek::fromDate($date)->value] ?? [];
 
         return array_map(
-            fn (Availability $template): array => [$this->combine($date, $template->startsAt), $this->combine($date, $template->endsAt)],
+            fn(Availability $template): array => [$this->combine($date, $template->startsAt), $this->combine($date, $template->endsAt)],
             $templates,
         );
     }
