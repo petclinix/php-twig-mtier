@@ -2,6 +2,8 @@
 
 PetcliniX — classic server-rendered PHP MVC showcase: Twig templates, a hand-rolled PDO data layer, no ORM.
 
+[![Quality gate](https://sonarcloud.io/api/project_badges/quality_gate?project=petclinix_php-twig-mtier)](https://sonarcloud.io/summary/new_code?id=petclinix_php-twig-mtier)
+
 ## Overview
 
 A thin layered architecture, `Http\Controller → Service → Repository → Domain`,
