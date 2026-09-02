@@ -13,9 +13,14 @@
 .php-cs-fixer.cache
 .deptrac.cache
 
-## User uploads
-/public/uploads/
+
+## Node.js / Playwright (e2e/)
+node_modules/
+playwright-report/
+test-results/
 
 ## Intellij Idea
 /.idea/
 
+## User uploads
+/public/uploads/

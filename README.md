@@ -26,6 +26,7 @@ constraints, and conventions.
 | [`docs/service-composition.puml`](docs/service-composition.puml) / [`.svg`](docs/service-composition.svg) | Every controller, which service (if any) it calls via `ServiceFactory`, and which repositories each service holds. |
 | [`docs/entity-model.puml`](docs/entity-model.puml) / [`.svg`](docs/entity-model.svg) | All 9 tables, their columns, and their relationships, sourced from `db/schema.sql`. |
 | [`docs/sequence-book-appointment.puml`](docs/sequence-book-appointment.puml) / [`.svg`](docs/sequence-book-appointment.svg) | The booking flow, including both concurrency-safety layers described in `architecture-internals.md` §1. |
+| [`e2e/README.md`](e2e/README.md) | How to run the Playwright E2E tests, test structure, data strategy. |
 
 ## Quickstart
 
@@ -43,6 +44,17 @@ Owners and vets self-register at `/register`. The admin account is seeded (admin
 ```
 docker compose exec php vendor/bin/phpunit
 ```
+
+### E2E tests
+
+```bash
+docker compose up --build -d         # start the full stack first
+cd e2e
+npm install
+npm test                             # Playwright, headless Chromium
+```
+
+See [`e2e/README.md`](e2e/README.md) for test structure and data strategy.
 
 ## Quality Tooling
 
