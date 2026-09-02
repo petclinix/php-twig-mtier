@@ -16,9 +16,10 @@ when a rule must be enforced identically across different authorization models
 talks to a Repository directly — there is no rule requiring every controller to go
 through a service.
 
-This is the one concept most different from the sister Java implementation
-(`java-springboot-react-mtier`): there, `web → persistence` is forbidden outright,
-so every controller action goes through a service even for a single `findById()`.
+This is the one concept most different from a conventional 3-tier architecture
+built around a DI container: there, `web → persistence` is typically forbidden
+outright, so every controller action goes through a service even for a single
+`findById()`.
 Here it's allowed, and used deliberately — most controller actions in this
 codebase are simple CRUD with no cross-cutting logic, and routing them through a
 pass-through service would just be ceremony.
@@ -70,7 +71,8 @@ same structure as a diagram, with the actual request path drawn through it.
 - `Service` never depends on `Http\Controller`.
 - `Repository` never depends on `Service`.
 - `Http\Controller` **may** depend on `Repository` directly, for simple CRUD —
-  this is the deliberate divergence from the sister project.
+  this is the deliberate divergence from a conventional 3-tier convention that
+  always routes through a service layer.
 
 **2. Domain objects are framework-free.** No PDO types, no Twig helpers, no
 `$_SERVER`/`$_POST` — a `Domain` class only ever holds and computes over its own
@@ -98,8 +100,9 @@ wiring, no reflection/DI-container magic).
 **6. Persistence exceptions never cross into a controller.** A Repository catches
 `PDOException` and re-throws a domain exception —
 `AppointmentSlotUnavailableException`, etc. A controller only ever catches the
-domain exception type, never `PDOException`. This is a genuine, already-followed
-parallel to the sister project's JPA-exception-wrapping rule.
+domain exception type, never `PDOException`. This is the same discipline an
+ORM/DI-framework stack enforces at its persistence boundary — done here by hand
+instead.
 
 **7. There is no lazy loading, because there is no ORM.** Every `findX()` call
 returns fully-hydrated Domain objects (or nothing) — there is no proxy object, no
@@ -110,10 +113,10 @@ plainly: this entire category of bug simply cannot occur here.
 
 **1. Repository method naming** — `create(...)`, `findById(...): ?T`,
 `findAllByX(...): list<T>` (never `null` — an empty list on no match), `updateX(...)`,
-`delete(...)`. There is no `retrieve*`-throws-`NotFoundException` convention here
-(unlike the sister project) — every caller checks `null` explicitly, because there
-is no centralized exception-to-HTTP-status mapper to make a shared throwing
-convention pay for itself.
+`delete(...)`. There is no `retrieve*`-throws-`NotFoundException` convention here,
+as a typical framework-backed stack with a centralized exception-to-HTTP-status
+mapper might use — every caller checks `null` explicitly, because there is no
+centralized mapper here to make a shared throwing convention pay for itself.
 
 **2. `create()` methods grow by trailing optional parameters.** Widely-used
 `create()` methods (e.g. `AppointmentRepository::create()`) append new fields as
@@ -122,9 +125,8 @@ many call sites actually exist — see `architecture-internals.md` §9 for the
 reasoning and when that stops being the right call.
 
 **3. Domain-rule exceptions extend `RuntimeException` directly** — no shared
-abstract base class, unlike the sister's `PetclinixException`. There is no
-centralized handler to make a shared base pay for itself; each controller catches
-its own specific exception types inline.
+abstract base class. There is no centralized handler to make a shared base pay
+for itself; each controller catches its own specific exception types inline.
 
 **4. Every mutating controller action follows the same shape:**
 
@@ -140,14 +142,13 @@ if ($errors->isEmpty()) {
 
 **5. Test fixtures use unique emails** (`bin2hex(random_bytes(6))` suffixes) to
 avoid collisions against a real database, and tests follow an `// arrange` /
-`// act` / `// assert` comment convention — the latter a direct match to the
-sister project's own convention.
+`// act` / `// assert` comment convention throughout.
 
 ## The "no ORM" trade-off
 
 Hand-rolled PDO instead of an ORM/query builder is this project's headline
-paradigm choice, contrasting directly with the sister Java implementation's
-Spring Data JPA. What it buys:
+paradigm choice, contrasting directly with what a typical framework-backed
+3-tier stack would give you for free through an ORM. What it buys:
 
 - The SQL a query runs *is* the code you're reading — no generated queries, no
   N+1 surprises, no lazy-loading bug class (Design Constraint #7).
@@ -166,8 +167,7 @@ What it costs:
   each implemented by hand per table that needs them, rather than inherited from
   a base entity.
 
-This is a deliberate portfolio contrast point with `java-springboot-react-mtier`,
-not an oversight — see the PetcliniX site's implementation-comparison table.
+This is a deliberate design choice, not an oversight.
 
 ## What Is Intentionally Not Here
 

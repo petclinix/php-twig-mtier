@@ -9,9 +9,9 @@ with hand-rolled PDO instead of an ORM — the SQL a query runs *is* the code
 you're reading, with no generated queries or lazy-loading bug class. A
 **Service** exists only when logic genuinely spans multiple repositories or
 must be enforced identically across authorization models; otherwise a
-controller talks to a Repository directly. This is the main point of contrast
-with the sister Java implementation (`java-springboot-react-mtier`), where
-every controller action is forced through a service layer. See
+controller talks to a Repository directly, rather than mandating a service
+layer for every action the way a conventional 3-tier architecture with a DI
+container typically would. See
 [`docs/architecture.md`](docs/architecture.md) for the full layer rules,
 constraints, and conventions.
 

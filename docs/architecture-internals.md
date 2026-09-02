@@ -3,9 +3,7 @@
 This document explains the non-obvious design decisions in this application. Each
 section describes what a pattern is, why it was chosen, and what breaks if it is not
 followed. Where useful, it contrasts the choice with what a framework or ORM — this
-project deliberately has neither — would normally decide for you; see
-[java-springboot-react-mtier](https://github.com/petclinix/java-springboot-react-mtier)
-for the paradigm that makes those choices instead.
+project deliberately has neither — would normally decide for you instead.
 
 See [`architecture.md`](architecture.md) for the full layer/constraint/convention
 reference these sections explain the reasoning behind.
@@ -520,10 +518,10 @@ live MariaDB instance via Docker Compose. None of the SQL, schema constraints,
 generated columns, or hand-rolled hydration logic is ever replaced with a mock or an
 in-memory substitute.
 
-This is a deliberate contrast with a mock-heavy, ORM-backed sibling implementation of
-this same application. There, an ORM and a framework mediate persistence, so a
-repository mock stands in for a well-defined contract the framework itself
-guarantees. Here, there is no ORM: the SQL *is* the business logic for concurrency
+This is a deliberate choice, not an oversight. In a typical ORM/framework-backed
+stack, the ORM mediates persistence, so a repository mock stands in for a
+well-defined contract the framework itself guarantees. Here, there is no ORM:
+the SQL *is* the business logic for concurrency
 safety (§1), overlap detection (§4), and constraint enforcement. Mocking the
 repository layer in this codebase would mean testing nothing about whether the
 actual queries are correct — the one thing most worth testing.

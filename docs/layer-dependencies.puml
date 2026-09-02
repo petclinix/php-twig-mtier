@@ -49,11 +49,11 @@ package "Infrastructure" #EEEDFE {
 [Controllers]   .[#red].> [Database]      : FORBIDDEN\n(must go through a Repository)
 
 note bottom of [Controllers]
-  The one rule most different from the sister
-  Java implementation: **web → persistence is
-  allowed here**, deliberately, for the majority
-  of controllers that need no business logic
-  beyond a single repository call.
+  The one rule most different from a conventional
+  3-tier / DI-container architecture: **web →
+  persistence is allowed here**, deliberately, for
+  the majority of controllers that need no business
+  logic beyond a single repository call.
 end note
 
 @enduml
