@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/css/app.css">
     <title>{% block title %}PetcliniX{% endblock %}</title>
 </head>
 <body>
@@ -12,7 +13,7 @@
             <a href="/">Home</a>
             {% if current_user_role %}
                 <a href="/dashboard">Dashboard</a>
-                <form method="post" action="/logout" style="display:inline">
+                <form method="post" action="/logout" class="nav-form">
                     <input type="hidden" name="_token" value="{{ csrf_token() }}">
                     <button type="submit">Log out</button>
                 </form>

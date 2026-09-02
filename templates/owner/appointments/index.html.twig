@@ -14,14 +14,14 @@
                     {{ appointment.scheduledAt|date('Y-m-d H:i') }} —
                     {{ petsById[appointment.petId].name }} with
                     Dr. {{ vetsById[appointment.vetId].lastName }}
-                    ({{ appointment.status.value }})
+                    <span class="status-badge status-{{ appointment.status.value }}">({{ appointment.status.value }})</span>
                     {%- if appointment.reason %} — {{ appointment.reason }}{% endif %}
 
                     {% if appointment.status.value in ['requested', 'confirmed'] %}
                         <a href="/owner/appointments/{{ appointment.id }}/reschedule">Reschedule</a>
-                        <form method="post" action="/owner/appointments/{{ appointment.id }}/cancel" style="display:inline">
+                        <form method="post" action="/owner/appointments/{{ appointment.id }}/cancel" class="inline-form">
                             <input type="hidden" name="_token" value="{{ csrf_token() }}">
-                            <button type="submit">Cancel</button>
+                            <button type="submit" class="btn-danger">Cancel</button>
                         </form>
                     {% endif %}
                 </li>
@@ -35,7 +35,7 @@
         <p>Add a pet before booking an appointment.</p>
     {% else %}
         {% if errors is not empty %}
-            <ul>
+            <ul class="field-errors">
                 {% for error in errors %}
                     <li>{{ error }}</li>
                 {% endfor %}

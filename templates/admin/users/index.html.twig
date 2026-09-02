@@ -20,16 +20,16 @@
                 <tr>
                     <td>{{ user.email }}</td>
                     <td>{{ user.role.value }}</td>
-                    <td>{{ user.isActive ? 'active' : 'deactivated' }}</td>
+                    <td><span class="status-badge status-{{ user.isActive ? 'active' : 'inactive' }}">{{ user.isActive ? 'active' : 'deactivated' }}</span></td>
                     <td>{{ user.createdAt|date('Y-m-d') }}</td>
                     <td>
                         {% if user.isActive %}
-                            <form method="post" action="/admin/users/{{ user.id }}/deactivate" style="display:inline">
+                            <form method="post" action="/admin/users/{{ user.id }}/deactivate" class="inline-form">
                                 <input type="hidden" name="_token" value="{{ csrf_token() }}">
-                                <button type="submit">Deactivate</button>
+                                <button type="submit" class="btn-danger">Deactivate</button>
                             </form>
                         {% else %}
-                            <form method="post" action="/admin/users/{{ user.id }}/activate" style="display:inline">
+                            <form method="post" action="/admin/users/{{ user.id }}/activate" class="inline-form">
                                 <input type="hidden" name="_token" value="{{ csrf_token() }}">
                                 <button type="submit">Activate</button>
                             </form>

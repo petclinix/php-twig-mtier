@@ -12,7 +12,7 @@
             {% for pet in pets %}
                 <li>
                     {% if pet.photoUrl %}
-                        <img src="{{ pet.photoUrl }}" alt="{{ pet.name }}" width="60" height="60">
+                        <img src="{{ pet.photoUrl }}" alt="{{ pet.name }}" width="60" height="60" class="pet-thumb">
                     {% endif %}
                     <a href="/owner/pets/{{ pet.id }}">{{ pet.name }}</a> — {{ pet.species }}
                     {%- if pet.breed %} ({{ pet.breed }}){% endif -%}
@@ -25,7 +25,7 @@
     <h3>Add a Pet</h3>
 
     {% if errors is not empty %}
-        <ul>
+        <ul class="field-errors">
             {% for error in errors %}
                 <li>{{ error }}</li>
             {% endfor %}

@@ -8,7 +8,7 @@
     <p>Currently scheduled for {{ appointment.scheduledAt|date('Y-m-d H:i') }} ({{ appointment.durationMinutes }} minutes).</p>
 
     {% if errors is not empty %}
-        <ul>
+        <ul class="field-errors">
             {% for error in errors %}
                 <li>{{ error }}</li>
             {% endfor %}
@@ -55,6 +55,6 @@
 
     <form method="post" action="/owner/appointments/{{ appointment.id }}/cancel">
         <input type="hidden" name="_token" value="{{ csrf_token() }}">
-        <button type="submit">Cancel Appointment Instead</button>
+        <button type="submit" class="btn-danger">Cancel Appointment Instead</button>
     </form>
 {% endblock %}

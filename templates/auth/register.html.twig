@@ -6,7 +6,7 @@
     <h2>Register</h2>
 
     {% if errors is not empty %}
-        <ul>
+        <ul class="field-errors">
             {% for error in errors %}
                 <li>{{ error }}</li>
             {% endfor %}
